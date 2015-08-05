@@ -1,10 +1,31 @@
+# ------------------------------------------------------------------------------
+# Commands
+
 .PHONY: test clean
 
-test: PlintTest
-	./PlintTest
+# Build and run tests
+test: build build/PlintTest build/test_data build/parse_ast.py
+	(cd ./build; ./PlintTest)
 
+# Clean all build outputs
 clean:
-	rm PlintTest *.cmi *.cmx *.o
+	rm -rf build
+	(cd ./src; rm *.cmi *.cmx *.o)
 
-PlintTest: PlintTest.ml
-	ocamlfind ocamlopt -o PlintTest -linkpkg -package ounit,batteries PlintTest.ml
+# ------------------------------------------------------------------------------
+# Dependencies
+
+build:
+	mkdir build
+
+build/PlintTest: src/PlintTest.ml
+	ocamlfind ocamlopt -linkpkg \
+		-package ounit,batteries \
+		-o build/PlintTest \
+		src/PlintTest.ml
+
+build/test_data:
+	ln -s ../src/test_data build/test_data
+
+build/parse_ast.py:
+	ln -s ../src/parse_ast.py build/parse_ast.py

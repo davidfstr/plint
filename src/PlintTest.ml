@@ -33,8 +33,8 @@ let check_output cmd =
 let test_fixture = "Plint" >:::
 [
   "test_can_parse_hello" >:: ( fun () ->
-    let expected_ast = BatFile.with_file_in "hello.py.ast" BatIO.read_all in
-    let actual_ast = check_output "python3 parse_ast.py hello.py" in
+    let expected_ast = BatFile.with_file_in "test_data/hello.py.ast" BatIO.read_all in
+    let actual_ast = check_output "python3 parse_ast.py test_data/hello.py" in
     assert_equal expected_ast actual_ast
   )
 ]
