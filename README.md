@@ -7,16 +7,15 @@ Plint's main objective is to find any misspelled function, module, method, or cl
 
 ## Requirements
 
+* Make
 * Python 3.4.x
-* OCaml 4.02.1 or later
+* OCaml 4.02.1
     * On OS X, run `brew install opam` to get OPAM.
     * With OPAM, run `opam switch 4.02.1` and `eval \`opam config env\``
-* OUnit
+* OUnit 2.0.0
     * With OPAM, run `opam install ounit`
-* Batteries
+* Batteries 2.3.1
     * With OPAM, run `opam install batteries`
-* Make
-
 
 ## Running the unit tests
 
