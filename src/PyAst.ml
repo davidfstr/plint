@@ -9,8 +9,10 @@ open Yojson.Basic.Util
 
 
 type
-  (* NOTE: Can't name "module" because it is an OCaml keyword *)
-  pmodule = { body : stmt list } and
+  (* NOTE: Can't name "mod" because it is an OCaml keyword *)
+  mod_ =
+    | Module of mod_Module and
+  mod_Module = { body : stmt list } and
 
   stmt =
     | Expr of stmt_Expr and
@@ -118,14 +120,14 @@ let parse_stmt_list json =
       None
 
 
-let parse_pmodule json =
+let parse_mod_ json =
   match json with
     | `List [`String "Module"; members_json] ->
       let body_json     = members_json |> member "body" in
       
       parse_stmt_list    body_json       >>= fun body ->
       
-      Some { body = body }
+      Some (Module { body = body })
     
     | _ ->
       None
@@ -135,9 +137,9 @@ let () =
   let json = Yojson.Basic.from_file "test_data/hello.py.ast" in
   
   (* Print parsed AST *)
-  let () = match (parse_pmodule json) with
+  let () = match (parse_mod_ json) with
     | Some parsed ->
-      printf "%s\n" (Sexp.to_string (sexp_of_pmodule parsed))
+      printf "%s\n" (Sexp.to_string (sexp_of_mod_ parsed))
     
     | None ->
       printf "Parse failed\n" in
