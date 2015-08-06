@@ -16,6 +16,8 @@ Plint's main objective is to find any misspelled function, module, method, or cl
     * With OPAM, run `opam install ounit`
 * Batteries 2.3.1
     * With OPAM, run `opam install batteries`
+* yojson 1.2.1
+    * With OPAM, run `opam install yojson`
 
 ## Running the unit tests
 

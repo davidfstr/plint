@@ -1,3 +1,6 @@
+(* batteries: -package batteries *)
+(* ounit: -package ounit *)
+
 open OUnit
 
 (* -------------------------------------------------------------------------- *)
