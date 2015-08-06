@@ -8,41 +8,34 @@ open Option.Monad_infix
 open Yojson.Basic.Util
 
 
-(* NOTE: Can't name "module" because it is an OCaml keyword *)
-type pmodule = { body : stmt list }
+type
+  (* NOTE: Can't name "module" because it is an OCaml keyword *)
+  pmodule = { body : stmt list } and
 
-
- and stmt =
-  | Expr of stmt_Expr
-  
- and stmt_Expr = { value : expr }
+  stmt =
+    | Expr of stmt_Expr and
+  stmt_Expr = { value : expr } and
  
- 
- and expr_context = Load | Store | Del | AugLoad | AugStore | Param
+  expr_context = Load | Store | Del | AugLoad | AugStore | Param and
 
-
- and expr =
-  | Call of expr_Call
-  | Str of expr_Str
-  | Name of expr_Name
-
- and expr_Call =
-  { func : expr;
+  expr =
+    | Call of expr_Call
+    | Str of expr_Str
+    | Name of expr_Name and
+  expr_Call = {
+    func : expr;
     args : expr list;
     keywords : pkeyword list;
     starargs : expr option;
-    kwargs : expr option }
+    kwargs : expr option
+  } and
+  expr_Str = { s : string } and 
+  expr_Name = { id : pidentifier; ctx : expr_context } and
 
- and expr_Str = { s : string }
- 
- and expr_Name = { id : pidentifier; ctx : expr_context }
+  pkeyword = { arg : pidentifier; value : expr } and
+  pidentifier = string
 
-
- and pkeyword = { arg : pidentifier; value : expr }
-
- and pidentifier = string
-
- with sexp
+  with sexp
 
 
 let parse_expr_list json =
@@ -80,11 +73,13 @@ let rec parse_expr json =
       parse_expr_option   starargs_json   >>= fun starargs ->
       parse_expr_option   kwargs_json     >>= fun kwargs ->
       
-      Some (Call { func = func;
-                   args = args;
-                   keywords = keywords;
-                   starargs = starargs;
-                   kwargs = kwargs })
+      Some (Call {
+        func = func;
+        args = args;
+        keywords = keywords;
+        starargs = starargs;
+        kwargs = kwargs
+      })
     
     | `List [`String "Name"; members_json] ->
       let id_json       = members_json |> member "id" in
