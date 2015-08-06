@@ -1,6 +1,7 @@
 (* core: -package core -thread *)
 (* sexplib: -package sexplib.syntax -syntax camlp4o *)
 (* yojson: -package yojson *)
+(* <<permit duplicate labels>>: -w -30 *) 
 
 open Core.Std
 open Option.Monad_infix
@@ -14,7 +15,7 @@ type pmodule = { body : stmt list }
  and stmt =
   | Expr of stmt_Expr
   
- and stmt_Expr = { expr_value : expr }
+ and stmt_Expr = { value : expr }
  
  
  and expr_context = Load | Store | Del | AugLoad | AugStore | Param
@@ -37,7 +38,7 @@ type pmodule = { body : stmt list }
  and expr_Name = { id : pidentifier; ctx : expr_context }
 
 
- and pkeyword = { arg : pidentifier; keyword_value : expr }
+ and pkeyword = { arg : pidentifier; value : expr }
 
  and pidentifier = string
 
@@ -105,7 +106,7 @@ let parse_stmt json =
       
       parse_expr          value_json      >>= fun value ->
       
-      Some (Expr { expr_value = value })
+      Some (Expr { value = value })
     
     | _ ->
       None

@@ -35,6 +35,7 @@ build/PyAst: src/PyAst.ml
 		-package core -thread \
 		-package sexplib.syntax -syntax camlp4o \
 		-package yojson \
+		-w -30 \
 		-o build/PyAst \
 		src/PyAst.ml
 
