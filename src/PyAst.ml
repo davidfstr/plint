@@ -7,36 +7,37 @@ open Option.Monad_infix
 open Yojson.Basic.Util
 
 
-type pmodule = { body : pstmt list }
+(* NOTE: Can't name "module" because it is an OCaml keyword *)
+type pmodule = { body : stmt list }
 
 
- and pstmt =
-  | PExpr of pstmt_PExpr
+ and stmt =
+  | Expr of stmt_Expr
   
- and pstmt_PExpr = { expr_value : pexpr }
+ and stmt_Expr = { expr_value : expr }
  
  
- and pexpr_context = Load | Store | Del | AugLoad | AugStore | Param
+ and expr_context = Load | Store | Del | AugLoad | AugStore | Param
 
 
- and pexpr =
-  | PCall of pexpr_PCall
-  | PStr of pexpr_PStr
-  | PName of pexpr_PName
+ and expr =
+  | Call of expr_Call
+  | Str of expr_Str
+  | Name of expr_Name
 
- and pexpr_PCall =
-  { func : pexpr;
-    args : pexpr list;
+ and expr_Call =
+  { func : expr;
+    args : expr list;
     keywords : pkeyword list;
-    starargs : pexpr option;
-    kwargs : pexpr option }
+    starargs : expr option;
+    kwargs : expr option }
 
- and pexpr_PStr = { s : string }
+ and expr_Str = { s : string }
  
- and pexpr_PName = { id : pidentifier; ctx : pexpr_context }
+ and expr_Name = { id : pidentifier; ctx : expr_context }
 
 
- and pkeyword = { arg : pidentifier; keyword_value : pexpr }
+ and pkeyword = { arg : pidentifier; keyword_value : expr }
 
  and pidentifier = string
 
@@ -44,7 +45,7 @@ type pmodule = { body : pstmt list }
 
 
 let parse_expr_list json =
-  Some [PStr { s = "Hello" }]
+  Some [Str { s = "Hello" }]
 
 
 let parse_keyword_list json =
@@ -78,11 +79,11 @@ let rec parse_expr json =
       parse_expr_option   starargs_json   >>= fun starargs ->
       parse_expr_option   kwargs_json     >>= fun kwargs ->
       
-      Some (PCall { func = func;
-                    args = args;
-                    keywords = keywords;
-                    starargs = starargs;
-                    kwargs = kwargs })
+      Some (Call { func = func;
+                   args = args;
+                   keywords = keywords;
+                   starargs = starargs;
+                   kwargs = kwargs })
     
     | `List [`String "Name"; members_json] ->
       let id_json       = members_json |> member "id" in
@@ -91,30 +92,30 @@ let rec parse_expr json =
       parse_identifier    id_json         >>= fun id ->
       parse_expr_context  ctx_json        >>= fun ctx ->
       
-      Some (PName { id = id; ctx = ctx })
+      Some (Name { id = id; ctx = ctx })
     
     | _ ->
       None
 
 
-let parse_pstmt json =
+let parse_stmt json =
   match json with
     | `List [`String "Expr"; members_json] ->
       let value_json    = members_json |> member "value" in
       
       parse_expr          value_json      >>= fun value ->
       
-      Some (PExpr { expr_value = value })
+      Some (Expr { expr_value = value })
     
     | _ ->
       None
 
 
 (* TODO: Generify to parse lists of Parseables in general *)
-let parse_pstmt_list json =
+let parse_stmt_list json =
   match json with
     | `List item_jsons ->
-      Option.all (List.map item_jsons parse_pstmt) >>= fun items ->
+      Option.all (List.map item_jsons parse_stmt) >>= fun items ->
       Some items
     
     | _ ->
@@ -126,7 +127,7 @@ let parse_pmodule json =
     | `List [`String "Module"; members_json] ->
       let body_json     = members_json |> member "body" in
       
-      parse_pstmt_list    body_json       >>= fun body ->
+      parse_stmt_list    body_json       >>= fun body ->
       
       Some { body = body }
     
