@@ -17,8 +17,6 @@ type
   stmt =
     | Expr of stmt_Expr and
   stmt_Expr = { value : expr } and
- 
-  expr_context = Load | Store | Del | AugLoad | AugStore | Param and
 
   expr =
     | Call of expr_Call
@@ -27,17 +25,25 @@ type
   expr_Call = {
     func : expr;
     args : expr list;
-    keywords : pkeyword list;
+    keywords : keyword list;
     starargs : expr option;
     kwargs : expr option
   } and
   expr_Str = { s : string } and 
-  expr_Name = { id : pidentifier; ctx : expr_context } and
+  expr_Name = { id : identifier; ctx : expr_context } and
+  
+  expr_context = Load | Store | Del | AugLoad | AugStore | Param and
 
-  pkeyword = { arg : pidentifier; value : expr } and
-  pidentifier = string
+  keyword = { arg : identifier; value : expr } and
+  
+  (* ASDL's six builtin types are:
+   * identifier, int, string, bytes, object, singleton *)
+  identifier = string
 
   with sexp
+
+
+let sexp_of_mod = sexp_of_mod_
 
 
 let parse_expr_list json =
@@ -120,7 +126,7 @@ let parse_stmt_list json =
       None
 
 
-let parse_mod_ json =
+let parse_mod json =
   match json with
     | `List [`String "Module"; members_json] ->
       let body_json     = members_json |> member "body" in
@@ -137,9 +143,9 @@ let () =
   let json = Yojson.Basic.from_file "test_data/hello.py.ast" in
   
   (* Print parsed AST *)
-  let () = match (parse_mod_ json) with
+  let () = match (parse_mod json) with
     | Some parsed ->
-      printf "%s\n" (Sexp.to_string (sexp_of_mod_ parsed))
+      printf "%s\n" (Sexp.to_string (sexp_of_mod parsed))
     
     | None ->
       printf "Parse failed\n" in
