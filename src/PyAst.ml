@@ -7,7 +7,7 @@ open Core.Std
 open Option.Monad_infix
 open Yojson.Basic.Util
 
-
+(* === AST Types === *)
 type
   (* NOTE: Can't name "mod" because it is an OCaml keyword *)
   mod_ =
@@ -42,103 +42,97 @@ type
 
   with sexp
 
-
 let sexp_of_mod = sexp_of_mod_
 
 
-let parse_expr_list json =
-  Some [Str { s = "Hello" }]
-
-
-let parse_keyword_list json =
-  Some []
-
-
-let parse_expr_option json =
-  Some (None)
-
-
-let parse_identifier json =
-  Some "print"
-
-
-let parse_expr_context json =
-  Some Load
-
-
-let rec parse_expr json =
-  match json with
-    | `List [`String "Call"; members_json] ->
-      let func_json     = members_json |> member "func" in
-      let args_json     = members_json |> member "args" in
-      let keywords_json = members_json |> member "keywords" in
-      let starargs_json = members_json |> member "starargs" in
-      let kwargs_json   = members_json |> member "kwargs" in
+(* === AST Parse from JSON === *)
+let rec
+  parse_mod json =
+    match json with
+      | `List [`String "Module"; members_json] ->
+        let body_json     = members_json |> member "body" in
+        
+        parse_stmt_list    body_json       >>= fun body ->
+        
+        Some (Module { body = body })
       
-      parse_expr          func_json       >>= fun func ->
-      parse_expr_list     args_json       >>= fun args ->
-      parse_keyword_list  keywords_json   >>= fun keywords ->
-      parse_expr_option   starargs_json   >>= fun starargs ->
-      parse_expr_option   kwargs_json     >>= fun kwargs ->
+      | _ ->
+        None and
+  
+  parse_stmt json =
+    match json with
+      | `List [`String "Expr"; members_json] ->
+        let value_json    = members_json |> member "value" in
+        
+        parse_expr          value_json      >>= fun value ->
+        
+        Some (Expr { value = value })
       
-      Some (Call {
-        func = func;
-        args = args;
-        keywords = keywords;
-        starargs = starargs;
-        kwargs = kwargs
-      })
-    
-    | `List [`String "Name"; members_json] ->
-      let id_json       = members_json |> member "id" in
-      let ctx_json      = members_json |> member "ctx" in
+      | _ ->
+        None and
+  
+  (* TODO: Generify to parse lists of Parseables in general *)
+  parse_stmt_list json =
+    match json with
+      | `List item_jsons ->
+        Option.all (List.map item_jsons parse_stmt) >>= fun items ->
+        Some items
       
-      parse_identifier    id_json         >>= fun id ->
-      parse_expr_context  ctx_json        >>= fun ctx ->
+      | _ ->
+        None and
+  
+  parse_expr json =
+    match json with
+      | `List [`String "Call"; members_json] ->
+        let func_json     = members_json |> member "func" in
+        let args_json     = members_json |> member "args" in
+        let keywords_json = members_json |> member "keywords" in
+        let starargs_json = members_json |> member "starargs" in
+        let kwargs_json   = members_json |> member "kwargs" in
+        
+        parse_expr          func_json       >>= fun func ->
+        parse_expr_list     args_json       >>= fun args ->
+        parse_keyword_list  keywords_json   >>= fun keywords ->
+        parse_expr_option   starargs_json   >>= fun starargs ->
+        parse_expr_option   kwargs_json     >>= fun kwargs ->
+        
+        Some (Call {
+          func = func;
+          args = args;
+          keywords = keywords;
+          starargs = starargs;
+          kwargs = kwargs
+        })
       
-      Some (Name { id = id; ctx = ctx })
-    
-    | _ ->
-      None
-
-
-let parse_stmt json =
-  match json with
-    | `List [`String "Expr"; members_json] ->
-      let value_json    = members_json |> member "value" in
+      | `List [`String "Name"; members_json] ->
+        let id_json       = members_json |> member "id" in
+        let ctx_json      = members_json |> member "ctx" in
+        
+        parse_identifier    id_json         >>= fun id ->
+        parse_expr_context  ctx_json        >>= fun ctx ->
+        
+        Some (Name { id = id; ctx = ctx })
       
-      parse_expr          value_json      >>= fun value ->
-      
-      Some (Expr { value = value })
-    
-    | _ ->
-      None
+      | _ ->
+        None and
+  
+  parse_expr_list json =
+    Some [Str { s = "Hello" }] and
+  
+  parse_expr_option json =
+    Some (None) and
+  
+  parse_expr_context json =
+    Some Load and
+  
+  parse_keyword_list json =
+    Some [] and
+  
+  parse_identifier json =
+    Some "print"
 
 
-(* TODO: Generify to parse lists of Parseables in general *)
-let parse_stmt_list json =
-  match json with
-    | `List item_jsons ->
-      Option.all (List.map item_jsons parse_stmt) >>= fun items ->
-      Some items
-    
-    | _ ->
-      None
-
-
-let parse_mod json =
-  match json with
-    | `List [`String "Module"; members_json] ->
-      let body_json     = members_json |> member "body" in
-      
-      parse_stmt_list    body_json       >>= fun body ->
-      
-      Some (Module { body = body })
-    
-    | _ ->
-      None
-
-
+(* === Main === *)
 let () =
   let json = Yojson.Basic.from_file "test_data/hello.py.ast" in
   
