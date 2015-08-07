@@ -9,10 +9,10 @@ open Yojson.Basic.Util
 
 (* === AST Types === *)
 type
-  (* NOTE: Can't name "mod" because it is an OCaml keyword *)
-  mod_ =
-    | Module of mod_Module and
-  mod_Module = { body : stmt list } and
+  (* Actually called "mod" in Python's abstract grammer. *)
+  ast =
+    | Module of ast_Module and
+  ast_Module = { body : stmt list } and
 
   stmt =
     | Expr of stmt_Expr and
@@ -42,12 +42,10 @@ type
 
   with sexp
 
-let sexp_of_mod = sexp_of_mod_
 
-
-(* === AST Parse from JSON === *)
+(* === Parse AST from JSON === *)
 let rec
-  parse_mod json =
+  parse_ast json =
     match json with
       | `List [`String "Module"; members_json] ->
         let body_json     = members_json |> member "body" in
@@ -199,17 +197,16 @@ let rec
         None
 
 
-(* === Main === *)
-let () =
-  let json = Yojson.Basic.from_file "src/test_data/hello.py.ast" in
-  
-  (* Print parsed AST *)
-  let () = match (parse_mod json) with
-    | Some parsed ->
-      printf "%s\n" (Sexp.to_string (sexp_of_mod parsed))
-    
-    | None ->
-      printf "Parse failed\n" in
-  
-  (* Print JSON *)
-  printf "%s\n" (Yojson.Basic.to_string json)
+(* === Parse AST from Python Source === *)
+
+let parse_ast_of_file_as_json python_filepath =
+  (* TODO: Escape shell metacharacters and similar *)
+  let shell_command = "python3 src/parse_ast.py " ^ python_filepath in
+  let json_string = Subprocess.check_output shell_command in
+  let json = Yojson.Basic.from_string json_string in
+  json
+
+
+let parse_ast_of_file python_filepath =
+  let json = parse_ast_of_file_as_json python_filepath in
+  parse_ast json
