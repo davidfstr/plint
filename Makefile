@@ -4,43 +4,27 @@
 .PHONY: test clean
 
 # Build and run tests
-test: build build/PlintTest build/test_data build/parse_ast.py
-	(cd ./build; ./PlintTest)
+test: PlintTest.native
+	./PlintTest.native
 
 # Test the PyAst module
 # TODO: Integrate with the main unit test runner
-test_ast: build/PyAst
-	(cd ./build; ./PyAst)
+test_ast: PyAst.native
+	./PyAst.native
 
 # Clean all build outputs
 clean:
-	rm -rf build
-	(cd ./src; rm *.cmi *.cmx *.o)
+	rm -rf _build
 
 # ------------------------------------------------------------------------------
 # Dependencies
 
-build:
-	mkdir build
+PlintTest.native: src/PlintTest.ml src/Subprocess.ml
+	ocamlbuild -use-ocamlfind \
+		src/PlintTest.native
 
-build/PlintTest: src/PlintTest.ml
-	ocamlfind ocamlopt -linkpkg \
-		-package batteries \
-		-package ounit \
-		-o build/PlintTest \
-		src/PlintTest.ml
-
-build/PyAst: src/PyAst.ml
-	ocamlfind ocamlopt -linkpkg \
-		-package core -thread \
-		-package sexplib.syntax -syntax camlp4o \
-		-package yojson \
-		-w -30 \
-		-o build/PyAst \
-		src/PyAst.ml
-
-build/test_data:
-	ln -s ../src/test_data build/test_data
-
-build/parse_ast.py:
-	ln -s ../src/parse_ast.py build/parse_ast.py
+PyAst.native: src/PyAst.ml
+	# -w -30: Disables warnings about different record types sharing a key name
+	ocamlbuild -use-ocamlfind \
+		-cflags -w,-30 \
+		src/PyAst.native

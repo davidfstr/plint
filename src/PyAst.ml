@@ -201,7 +201,7 @@ let rec
 
 (* === Main === *)
 let () =
-  let json = Yojson.Basic.from_file "test_data/hello.py.ast" in
+  let json = Yojson.Basic.from_file "src/test_data/hello.py.ast" in
   
   (* Print parsed AST *)
   let () = match (parse_mod json) with
