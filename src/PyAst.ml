@@ -71,7 +71,7 @@ let rec
       | _ ->
         None and
   
-  (* TODO: Generify to parse lists of Parseables in general *)
+  (* TODO: Combine with other parse_*_list functions *)
   parse_stmt_list json =
     match json with
       | `List item_jsons ->
@@ -104,6 +104,13 @@ let rec
           kwargs = kwargs
         })
       
+      | `List [`String "Str"; members_json] ->
+        let s_json        = members_json |> member "s" in
+        
+        parse_string        s_json          >>= fun s ->
+        
+        Some (Str { s = s })
+      
       | `List [`String "Name"; members_json] ->
         let id_json       = members_json |> member "id" in
         let ctx_json      = members_json |> member "ctx" in
@@ -114,13 +121,28 @@ let rec
         Some (Name { id = id; ctx = ctx })
       
       | _ ->
+        let () = printf "parse_expr: unrecognized format: %s\n" (Yojson.Basic.to_string json) in
         None and
   
+  (* TODO: Combine with other parse_*_list functions *)
   parse_expr_list json =
-    Some [Str { s = "Hello" }] and
+    match json with
+      | `List item_jsons ->
+        Option.all (List.map item_jsons parse_expr) >>= fun items ->
+        Some items
+      
+      | _ ->
+        None and
   
+  (* TODO: Combine with other parse_*_option functions *)
   parse_expr_option json =
-    Some (None) and
+    match json with
+      | `Null ->
+        Some None
+      
+      | _ ->
+        parse_expr json >>= fun expr ->
+        Some (Some expr) and
   
   parse_expr_context json =
     Some Load and
@@ -128,8 +150,18 @@ let rec
   parse_keyword_list json =
     Some [] and
   
+  (* === Parse Builtin Types === *)
+  
   parse_identifier json =
-    Some "print"
+    Some "print" and
+  
+  parse_string json =
+    match json with
+      | `String string ->
+        Some string
+      
+      | _ ->
+        None
 
 
 (* === Main === *)
