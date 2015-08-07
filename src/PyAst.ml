@@ -145,15 +145,50 @@ let rec
         Some (Some expr) and
   
   parse_expr_context json =
-    Some Load and
+    match json with
+      | `List [`String "Load"; `Assoc []]     -> Some Load
+      | `List [`String "Store"; `Assoc []]    -> Some Store
+      | `List [`String "Del"; `Assoc []]      -> Some Del
+      | `List [`String "AugLoad"; `Assoc []]  -> Some AugLoad
+      | `List [`String "AugStore"; `Assoc []] -> Some AugStore
+      | `List [`String "Param"; `Assoc []]    -> Some Param
+      | _                                     -> None and
+  
+  parse_keyword json =
+    match json with
+      | `List [`String "keyword"; members_json] ->
+        let arg_json      = members_json |> member "arg" in
+        let value_json    = members_json |> member "value" in
+        
+        parse_identifier    arg_json        >>= fun arg ->
+        parse_expr          value_json      >>= fun value ->
+        
+        Some {
+          arg = arg;
+          value = value
+        }
+      
+      | _ ->
+        None and
   
   parse_keyword_list json =
-    Some [] and
+    match json with
+      | `List item_jsons ->
+        Option.all (List.map item_jsons parse_keyword) >>= fun items ->
+        Some items
+      
+      | _ ->
+        None and
   
   (* === Parse Builtin Types === *)
   
   parse_identifier json =
-    Some "print" and
+    match json with
+      | `String string ->
+        Some string
+      
+      | _ ->
+        None and
   
   parse_string json =
     match json with
