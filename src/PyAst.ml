@@ -9,15 +9,22 @@ open Yojson.Basic.Util
 
 (* === AST Types === *)
 type
-  (* Actually called "mod" in Python's abstract grammer. *)
+  (** 
+   * Root node of a Python AST.
+   *
+   * Called "mod" in Python's abstract grammer, which is documented at:
+   * https://docs.python.org/3.4/library/ast.html
+   *)
   ast =
     | Module of ast_Module and
   ast_Module = { body : stmt list } and
 
+  (* TODO: Recognize remaining types of stmt. 19 total. *)
   stmt =
     | Expr of stmt_Expr and
   stmt_Expr = { value : expr } and
 
+  (* TODO: Recognize remaining types of expr. 26 total. *)
   expr =
     | Call of expr_Call
     | Str of expr_Str
@@ -65,6 +72,10 @@ let rec
         parse_expr          value_json      >>= fun value ->
         
         Some (Expr { value = value })
+      
+      | `List [`String unknown_type; _] ->
+        let () = printf "*** PyAst: unrecognized kind of stmt: %s\n" unknown_type in
+        None
       
       | _ ->
         None and
@@ -118,8 +129,11 @@ let rec
         
         Some (Name { id = id; ctx = ctx })
       
+      | `List [`String unknown_type; _] ->
+        let () = printf "*** PyAst: unrecognized kind of expr: %s\n" unknown_type in
+        None
+      
       | _ ->
-        let () = printf "parse_expr: unrecognized format: %s\n" (Yojson.Basic.to_string json) in
         None and
   
   (* TODO: Combine with other parse_*_list functions *)
@@ -199,7 +213,8 @@ let rec
 
 (* === Parse AST from Python Source === *)
 
-let parse_ast_of_file_as_json python_filepath =
+(** Parses a .py file to a JSON AST. *)
+let (parse_ast_of_file_as_json : string -> Yojson.Basic.json) python_filepath =
   (* TODO: Escape shell metacharacters and similar *)
   let shell_command = "python3 src/parse_ast.py " ^ python_filepath in
   let json_string = Subprocess.check_output shell_command in
@@ -207,6 +222,7 @@ let parse_ast_of_file_as_json python_filepath =
   json
 
 
-let parse_ast_of_file python_filepath =
+(** Parses a .py file to an `ast`. *)
+let (parse_ast_of_file : string -> ast option) python_filepath =
   let json = parse_ast_of_file_as_json python_filepath in
   parse_ast json

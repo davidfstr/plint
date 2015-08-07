@@ -14,7 +14,7 @@ clean:
 # ------------------------------------------------------------------------------
 # Dependencies
 
-PlintTest.native: src/PlintTest.ml src/Subprocess.ml
+PlintTest.native: src/PlintTest.ml src/Subprocess.ml src/PyAst.ml
 	# -w -30: Disables warnings about different record types sharing a key name
 	ocamlbuild -use-ocamlfind \
 		-cflags -w,-30 \
