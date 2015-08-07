@@ -4,28 +4,18 @@
 .PHONY: test clean
 
 # Build and run tests
-test: build build/PlintTest build/test_data build/parse_ast.py
-	(cd ./build; ./PlintTest)
+test: PlintTest.native
+	./PlintTest.native
 
 # Clean all build outputs
 clean:
-	rm -rf build
-	(cd ./src; rm *.cmi *.cmx *.o)
+	rm -rf _build
 
 # ------------------------------------------------------------------------------
 # Dependencies
 
-build:
-	mkdir build
-
-build/PlintTest: src/PlintTest.ml
-	ocamlfind ocamlopt -linkpkg \
-		-package ounit,batteries \
-		-o build/PlintTest \
-		src/PlintTest.ml
-
-build/test_data:
-	ln -s ../src/test_data build/test_data
-
-build/parse_ast.py:
-	ln -s ../src/parse_ast.py build/parse_ast.py
+PlintTest.native: src/PlintTest.ml src/Subprocess.ml src/PyAst.ml
+	# -w -30: Disables warnings about different record types sharing a key name
+	ocamlbuild -use-ocamlfind \
+		-cflags -w,-30 \
+		src/PlintTest.native

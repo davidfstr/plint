@@ -1,42 +1,33 @@
+(* batteries: -package batteries *)
+(* ounit: -package ounit *)
+
 open OUnit
+open Subprocess
 
-(* -------------------------------------------------------------------------- *)
-(* Subprocess *)
-
-exception ProcessExitedNonZero of int
-exception ProcessStopped of int
-exception ProcessKilled of int
-
-(** Runs command `cmd` and returns its output as a string. *)
-let check_output cmd =
-  let ic, oc = Unix.open_process cmd in
-  let output_buf = Buffer.create 16 in
-  (try
-     while true do
-       Buffer.add_channel output_buf ic 1
-     done
-   with End_of_file -> ());
-  let exit_status = Unix.close_process (ic, oc) in
-  let () = match exit_status with
-    | Unix.WEXITED 0
-      -> ()
-    | Unix.WEXITED return_code
-      -> raise (ProcessExitedNonZero return_code)
-    | Unix.WSIGNALED signal_num
-      -> raise (ProcessKilled signal_num)
-    | Unix.WSTOPPED signal_num
-      -> raise (ProcessStopped signal_num) in
-  (Buffer.contents output_buf)
-
-(* -------------------------------------------------------------------------- *)
 
 let test_fixture = "Plint" >:::
 [
-  "test_can_parse_hello" >:: ( fun () ->
-    let expected_ast = BatFile.with_file_in "test_data/hello.py.ast" BatIO.read_all in
-    let actual_ast = check_output "python3 parse_ast.py test_data/hello.py" in
-    assert_equal expected_ast actual_ast
+  "test_can_parse_hello_ast_as_json_in_expected_format" >:: ( fun () ->
+    let expected_ast_json = Yojson.Basic.from_file "src/test_data/hello.py.ast" in
+    let actual_ast_json = PyAst.parse_ast_of_file_as_json "src/test_data/hello.py" in
+    assert_equal expected_ast_json actual_ast_json
+  );
+  
+  "test_can_parse_hello_ast" >:: ( fun () ->
+    let ast = PyAst.parse_ast_of_file "src/test_data/hello.py" in
+    
+    match ast with
+      | Some _ ->
+        ()
+      
+      | None   ->
+        assert_failure (
+          "Could not parse generated AST JSON. " ^
+          "Maybe missing some parse rules in PyAst.ml?"
+        )
   )
 ]
 
-let _ = run_test_tt test_fixture
+
+let _ =
+  run_test_tt test_fixture
