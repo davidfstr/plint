@@ -228,3 +228,9 @@ let (parse_ast_of_file_as_json : string -> Yojson.Basic.json) py_filepath =
 let (parse_ast_of_file : string -> ast option) py_filepath =
   let json = parse_ast_of_file_as_json py_filepath in
   parse_ast json
+
+(* === AST Utilities === *)
+
+(** Formats an ast as a printable string. *)
+let (string_of_ast : ast -> string) ast =
+  Sexp.to_string (sexp_of_ast ast)
