@@ -1,11 +1,6 @@
-(* core: -package core -thread *)
-(* sexplib: -package sexplib.syntax -syntax camlp4o *)
-(* yojson: -package yojson *)
-(* <<permit duplicate labels>>: -w -30 *) 
-
 open Core.Std
-open Option.Monad_infix
-open Yojson.Basic.Util
+open Option.Monad_infix (* for `>>=` *)
+open Yojson.Basic.Util  (* for `member` *)
 
 (* === AST Types === *)
 type

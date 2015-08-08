@@ -1,9 +1,4 @@
-(* batteries: -package batteries *)
-(* ounit: -package ounit *)
-
 open OUnit
-open Subprocess
-
 
 let test_fixture = "Plint" >:::
 [
