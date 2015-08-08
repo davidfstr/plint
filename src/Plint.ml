@@ -3,7 +3,6 @@ open Core.Std
 (* === Check Source File === *)
 
 type error = {
-  file : string;
   line : int;
   exn : string
 } with sexp
@@ -37,8 +36,6 @@ let rec
           context
         else
           let new_error = {
-            (* TODO: Generate real file name *)
-            file = "src/test_data/bad_1_prnt.py";
             (* TODO: Generate real line number from ast *)
             line = 1;
             exn = "NameError: name '" ^ id ^ "' is not defined"
@@ -65,7 +62,7 @@ let (check : string -> error list) py_filepath =
   match PyAst.parse_ast_of_file py_filepath with
     | None ->
       (* TODO: Report actual line number of the syntax error *)
-      [{ file = py_filepath; line = 1; exn = "SyntaxError: invalid syntax" }]
+      [{ line = 1; exn = "SyntaxError: invalid syntax" }]
     
     | Some ast ->
       let (stmts : PyAst.stmt list) = ast in
@@ -81,7 +78,7 @@ let (check : string -> error list) py_filepath =
 let (descripton_of_error : error -> string) error =
   (* TODO: Fix to include the correct excerpt line *)
   "Traceback (most recent call last):\n" ^
-  "  File \"" ^ error.file ^ "\", line " ^ (string_of_int error.line) ^ ", in <module>\n" ^
+  "  Line " ^ (string_of_int error.line) ^ ", in <module>\n" ^
   "    prnt('Hello')\n" ^
   error.exn
 

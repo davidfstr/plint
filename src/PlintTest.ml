@@ -65,7 +65,6 @@ let test_fixture = "Plint" >:::
     let open Plint in
     let expected_errors = [
       {
-        file = "src/test_data/bad_1_prnt.py";
         line = 1;
         exn = "NameError: name 'prnt' is not defined"
       }
@@ -80,7 +79,6 @@ let test_fixture = "Plint" >:::
   "test_can_format_simple_error_correctly" >:: ( fun () ->
     let open Plint in
     let error = {
-      file = "src/test_data/bad_1_prnt.py";
       line = 1;
       exn = "NameError: name 'prnt' is not defined"
     } in
@@ -88,7 +86,7 @@ let test_fixture = "Plint" >:::
     
     let expected_description = 
       "Traceback (most recent call last):\n" ^
-      "  File \"src/test_data/bad_1_prnt.py\", line 1, in <module>\n" ^
+      "  Line 1, in <module>\n" ^
       "    prnt('Hello')\n" ^
       "NameError: name 'prnt' is not defined" in
     
