@@ -29,10 +29,19 @@ def format_ast_as_json(an_ast):
     if not isinstance(an_ast, ast.AST):
         raise ValueError('Unrecognized value type in ast: %s' % repr(an_ast))
     
-    return [type(an_ast).__name__, OrderedDict([
+    fields = OrderedDict([
         (field_name, format_ast_as_json(getattr(an_ast, field_name)))
         for field_name in an_ast._fields
-    ])]
+    ])
+    
+    if isinstance(an_ast, ast.stmt) or isinstance(an_ast, ast.expr):
+        attributes = OrderedDict([
+            ('lineno', an_ast.lineno),
+            ('col_offset', an_ast.lineno),
+        ])
+        return [type(an_ast).__name__, fields, attributes]
+    else:
+        return [type(an_ast).__name__, fields]
 
 
 if __name__ == '__main__':

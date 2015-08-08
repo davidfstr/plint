@@ -13,11 +13,13 @@ type
   ast = stmt list and
 
   (* TODO: Recognize remaining types of stmt. 19 total. *)
+  (* All stmts additionally track their location. *)
   stmt =
     | Expr of stmt_Expr and
-  stmt_Expr = { value : expr } and
+  stmt_Expr = { value : expr; location : location } and
 
   (* TODO: Recognize remaining types of expr. 26 total. *)
+  (* All exprs additionally track their location. *)
   expr =
     | Call of expr_Call
     | Str of expr_Str
@@ -27,10 +29,14 @@ type
     args : expr list;
     keywords : keyword list;
     starargs : expr option;
-    kwargs : expr option
+    kwargs : expr option;
+    location : location
   } and
-  expr_Str = { s : string } and 
-  expr_Name = { id : identifier; ctx : expr_context } and
+  expr_Str = { s : string; location : location } and 
+  expr_Name = { id : identifier; ctx : expr_context; location : location } and
+  
+  (** Location of a stmt or expr in the original source file. *)
+  location = { lineno : int; col_offset : int } and
   
   expr_context = Load | Store | Del | AugLoad | AugStore | Param and
 
@@ -65,12 +71,14 @@ let rec
   
   parse_stmt json =
     match json with
-      | `List [`String "Expr"; members_json] ->
+      | `List [`String "Expr"; members_json; attributes_json] ->
         let value_json    = members_json |> member "value" in
         
         parse_expr          value_json      >>= fun value ->
         
-        Some (Expr { value = value })
+        parse_location      attributes_json >>= fun location ->
+        
+        Some (Expr { value = value; location = location })
       
       | `List [`String unknown_type; _] ->
         let () = printf "*** PyAst: unrecognized kind of stmt: %s\n" unknown_type in
@@ -91,7 +99,7 @@ let rec
   
   parse_expr json =
     match json with
-      | `List [`String "Call"; members_json] ->
+      | `List [`String "Call"; members_json; attributes_json] ->
         let func_json     = members_json |> member "func" in
         let args_json     = members_json |> member "args" in
         let keywords_json = members_json |> member "keywords" in
@@ -104,29 +112,36 @@ let rec
         parse_expr_option   starargs_json   >>= fun starargs ->
         parse_expr_option   kwargs_json     >>= fun kwargs ->
         
+        parse_location      attributes_json >>= fun location ->
+        
         Some (Call {
           func = func;
           args = args;
           keywords = keywords;
           starargs = starargs;
-          kwargs = kwargs
+          kwargs = kwargs;
+          location = location
         })
       
-      | `List [`String "Str"; members_json] ->
+      | `List [`String "Str"; members_json; attributes_json] ->
         let s_json        = members_json |> member "s" in
         
         parse_string        s_json          >>= fun s ->
         
-        Some (Str { s = s })
+        parse_location      attributes_json >>= fun location ->
+        
+        Some (Str { s = s; location = location })
       
-      | `List [`String "Name"; members_json] ->
+      | `List [`String "Name"; members_json; attributes_json] ->
         let id_json       = members_json |> member "id" in
         let ctx_json      = members_json |> member "ctx" in
         
         parse_identifier    id_json         >>= fun id ->
         parse_expr_context  ctx_json        >>= fun ctx ->
         
-        Some (Name { id = id; ctx = ctx })
+        parse_location      attributes_json >>= fun location ->
+        
+        Some (Name { id = id; ctx = ctx; location = location })
       
       | `List [`String unknown_type; _] ->
         let () = printf "*** PyAst: unrecognized kind of expr: %s\n" unknown_type in
@@ -154,6 +169,14 @@ let rec
       | _ ->
         parse_expr json >>= fun expr ->
         Some (Some expr) and
+  
+  parse_location attributes_json =
+    match attributes_json with
+      | `Assoc [("lineno", `Int lineno); ("col_offset", `Int col_offset)] ->
+        Some { lineno = lineno; col_offset = col_offset }
+      
+      | _ ->
+        None and
   
   parse_expr_context json =
     match json with

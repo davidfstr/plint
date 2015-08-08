@@ -21,15 +21,21 @@ let test_fixture = "Plint" >:::
           value = Call {
             func = Name {
               id = "print";
-              ctx = Load
+              ctx = Load;
+              location = { lineno = 1; col_offset = 1 }
             };
             args = [
-              Str { s = "Hello" }
+              Str {
+                s = "Hello";
+                location = { lineno = 1; col_offset = 1 }
+              }
             ];
             keywords = [];
             starargs = None;
-            kwargs = None
-          }
+            kwargs = None;
+            location = { lineno = 1; col_offset = 1 }
+          };
+          location = { lineno = 1; col_offset = 1 }
         }
       ] in
     
@@ -61,6 +67,25 @@ let test_fixture = "Plint" >:::
     let expected_errors = [
       {
         line = 1;
+        exn = "NameError: name 'prnt' is not defined"
+      }
+    ] in
+    
+    assert_equal ~printer:Plint.string_of_error_list
+      expected_errors actual_errors
+  );
+  
+  "test_flags_multiple_errors" >:: ( fun () ->
+    let actual_errors = Plint.check "src/test_data/bad_2_prnt_prnt.py" in
+    
+    let open Plint in
+    let expected_errors = [
+      {
+        line = 1;
+        exn = "NameError: name 'prnt' is not defined"
+      };
+      {
+        line = 2;
         exn = "NameError: name 'prnt' is not defined"
       }
     ] in

@@ -30,14 +30,13 @@ let rec
       | Str { s = s } ->
         context
       
-      | Name { id = id; ctx = ctx } ->
+      | Name { id = id; ctx = ctx; location = location } ->
         (* TODO: Take the ctx into account *)
         if BatSet.mem id context.names then
           context
         else
           let new_error = {
-            (* TODO: Generate real line number from ast *)
-            line = 1;
+            line = location.lineno;
             exn = "NameError: name '" ^ id ^ "' is not defined"
           } in
           { names = context.names; errors = new_error :: context.errors }
@@ -57,7 +56,7 @@ let (exec : exec_context -> PyAst.stmt -> exec_context) context stmt =
     | Expr { value = expr } ->
       eval context expr
 
-(* Checks the specified Python source file for errors. *)
+(** Checks the specified Python source file for errors. *)
 let (check : string -> error list) py_filepath =
   match PyAst.parse_ast_of_file py_filepath with
     | None ->
@@ -72,11 +71,10 @@ let (check : string -> error list) py_filepath =
       let final_context = BatList.fold_left exec initial_context stmts in
       
       let { errors = final_errors } = final_context in
-      final_errors
+      BatList.rev final_errors  (* order errors from first to last *)
 
-(* Formats a human-readable description of the specified error. *)
+(** Formats a human-readable description of the specified error. *)
 let (descripton_of_error : error -> string) error =
-  (* TODO: Fix to include the correct excerpt line *)
   "Traceback (most recent call last):\n" ^
   "  Line " ^ (string_of_int error.line) ^ ", in <module>\n" ^
   "    prnt('Hello')\n" ^
