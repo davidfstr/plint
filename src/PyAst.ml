@@ -11,13 +11,11 @@ open Yojson.Basic.Util
 type
   (** 
    * Root node of a Python AST.
-   *
-   * Called "mod" in Python's abstract grammer, which is documented at:
+   * 
+   * Corresponds to an ast.Module from Python's abstract grammer, documented at:
    * https://docs.python.org/3.4/library/ast.html
    *)
-  ast =
-    | Module of ast_Module and
-  ast_Module = { body : stmt list } and
+  ast = stmt list and
 
   (* TODO: Recognize remaining types of stmt. 19 total. *)
   stmt =
@@ -52,6 +50,10 @@ type
   with sexp
 
 
+let (keyword_values : keyword list -> expr list) keywords =
+  BatList.map (fun (k : keyword) -> k.value) keywords
+
+
 (* === Parse AST from JSON === *)
 let rec
   parse_ast json =
@@ -61,7 +63,7 @@ let rec
         
         parse_stmt_list    body_json       >>= fun body ->
         
-        Some (Module { body = body })
+        Some body
       
       | _ ->
         None and
