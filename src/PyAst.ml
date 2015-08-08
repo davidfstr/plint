@@ -43,8 +43,10 @@ type
 
   keyword = { arg : identifier; value : expr } and
   
-  (* ASDL's six builtin types are:
-   * identifier, int, string, bytes, object, singleton *)
+  (* 
+   * ASDL's six builtin types are:
+   * identifier, int, string, bytes, object, singleton
+   *)
   identifier = string
 
   with sexp
@@ -214,15 +216,15 @@ let rec
 (* === Parse AST from Python Source === *)
 
 (** Parses a .py file to a JSON AST. *)
-let (parse_ast_of_file_as_json : string -> Yojson.Basic.json) python_filepath =
+let (parse_ast_of_file_as_json : string -> Yojson.Basic.json) py_filepath =
   (* TODO: Escape shell metacharacters and similar *)
-  let shell_command = "python3 src/parse_ast.py " ^ python_filepath in
+  let shell_command = "python3 src/parse_ast.py " ^ py_filepath in
   let json_string = Subprocess.check_output shell_command in
   let json = Yojson.Basic.from_string json_string in
   json
 
 
 (** Parses a .py file to an `ast`. *)
-let (parse_ast_of_file : string -> ast option) python_filepath =
-  let json = parse_ast_of_file_as_json python_filepath in
+let (parse_ast_of_file : string -> ast option) py_filepath =
+  let json = parse_ast_of_file_as_json py_filepath in
   parse_ast json
