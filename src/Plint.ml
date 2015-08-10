@@ -46,11 +46,15 @@ let rec
                 exn = "NameError: name '" ^ id ^ "' is not defined"
               } in
               { names = context.names; errors = new_error :: context.errors }
+          
           | Store
           | AugStore
-          | Del
           | Param -> 
-            context
+            { names = BatSet.add id context.names; errors = context.errors }
+          
+          | Del ->
+            (* TODO: Test *)
+            { names = BatSet.remove id context.names; errors = context.errors }
         )
     and
   

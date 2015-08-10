@@ -53,11 +53,9 @@ let test_fixture = "Plint" >:::
   (* Error Reporting *)
   
   "test_passes_simple_program" >:: ( fun () ->
-    let actual_errors = Plint.check "src/test_data/ok_1_print.py" in
-    let expected_errors = [] in
-    
     assert_equal ~printer:Plint.string_of_error_list
-      expected_errors actual_errors
+      []
+      (Plint.check "src/test_data/ok_1_print.py")
   );
   
   "test_flags_misspelled_function_invocation" >:: ( fun () ->
@@ -117,11 +115,15 @@ let test_fixture = "Plint" >:::
   (* Assignment *)
   
   "test_passes_assignment" >:: ( fun () ->
-    let actual_errors = Plint.check "src/test_data/ok_2_assignment.py" in
-    let expected_errors = [] in
-    
     assert_equal ~printer:Plint.string_of_error_list
-      expected_errors actual_errors
+      []
+      (Plint.check "src/test_data/ok_2_assignment.py")
+  );
+  
+  "test_passes_read_of_assigned_var" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_3_read_assigned_var.py")
   );
 ]
 
