@@ -15,7 +15,8 @@ clean:
 # Dependencies
 
 PlintTest.native: src/*.ml
-	# -w -30: Disables warnings about different record types sharing a key name
+	@# -w @8: Treat non-exhaustive pattern matching as an error
+	@# -w -30: Disables warnings about different record types sharing a key name
 	ocamlbuild -use-ocamlfind \
-		-cflags -w,-30 \
+		-cflags -w,@8-30 \
 		src/PlintTest.native

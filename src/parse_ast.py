@@ -23,6 +23,8 @@ def format_ast_as_json(an_ast):
         return [format_ast_as_json(x) for x in an_ast]
     if isinstance(an_ast, str):
         return an_ast
+    if isinstance(an_ast, int):
+        return an_ast
     if an_ast is None:
         return an_ast
     

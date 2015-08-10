@@ -113,6 +113,16 @@ let test_fixture = "Plint" >:::
     assert_equal ~printer:BatPervasives.identity
       expected_description actual_description
   );
+  
+  (* Assignment *)
+  
+  "test_passes_assignment" >:: ( fun () ->
+    let actual_errors = Plint.check "src/test_data/ok_2_assignment.py" in
+    let expected_errors = [] in
+    
+    assert_equal ~printer:Plint.string_of_error_list
+      expected_errors actual_errors
+  );
 ]
 
 

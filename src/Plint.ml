@@ -20,26 +20,38 @@ let rec
         starargs = starargs;
         kwargs = kwargs
       } ->
-        let step1 = eval context func in
+        let step0 = context in
+        let step1 = eval step0 func in
         let step2 = BatList.fold_left eval step1 args in
         let step3 = BatList.fold_left eval step2 (keyword_values keywords) in
         let step4 = eval_option step3 starargs in
         let step5 = eval_option step4 kwargs in
         step5
       
+      | Num { n = n } ->
+        context
+      
       | Str { s = s } ->
         context
       
       | Name { id = id; ctx = ctx; location = location } ->
-        (* TODO: Take the ctx into account *)
-        if BatSet.mem id context.names then
-          context
-        else
-          let new_error = {
-            line = location.lineno;
-            exn = "NameError: name '" ^ id ^ "' is not defined"
-          } in
-          { names = context.names; errors = new_error :: context.errors }
+        (match ctx with
+          | Load
+          | AugLoad ->
+            if BatSet.mem id context.names then
+              context
+            else
+              let new_error = {
+                line = location.lineno;
+                exn = "NameError: name '" ^ id ^ "' is not defined"
+              } in
+              { names = context.names; errors = new_error :: context.errors }
+          | Store
+          | AugStore
+          | Del
+          | Param -> 
+            context
+        )
     and
   
   (eval_option : exec_context -> PyAst.expr option -> exec_context) context expr_option =
@@ -48,20 +60,29 @@ let rec
         eval context expr
       
       | None ->
-        context
+        context and
+  
+  (eval_list : exec_context -> PyAst.expr list -> exec_context) context expr_list =
+    BatList.fold_left eval context expr_list
 
 let (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
   let open PyAst in
   match stmt with
-    | Expr { value = expr } ->
-      eval context expr
+    | Assign { targets = targets; value = value } ->
+      let step0 = context in
+      let step1 = eval_list step0 targets in
+      let step2 = eval step1 value in
+      step2
+    
+    | Expr { value = value } ->
+      eval context value
 
 (** Checks the specified Python source file for errors. *)
 let (check : string -> error list) py_filepath =
   match PyAst.parse_ast_of_file py_filepath with
     | None ->
       (* TODO: Report actual line number of the syntax error *)
-      [{ line = 1; exn = "SyntaxError: invalid syntax" }]
+      [{ line = 1; exn = "SystemError: unable to parse intermediate AST" }]
     
     | Some ast ->
       let (stmts : PyAst.stmt list) = ast in

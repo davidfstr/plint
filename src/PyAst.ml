@@ -15,13 +15,16 @@ type
   (* TODO: Recognize remaining types of stmt. 19 total. *)
   (* All stmts additionally track their location. *)
   stmt =
+    | Assign of stmt_Assign
     | Expr of stmt_Expr and
+  stmt_Assign = { targets : expr list; value : expr; location : location } and
   stmt_Expr = { value : expr; location : location } and
 
   (* TODO: Recognize remaining types of expr. 26 total. *)
   (* All exprs additionally track their location. *)
   expr =
     | Call of expr_Call
+    | Num of expr_Num
     | Str of expr_Str
     | Name of expr_Name and
   expr_Call = {
@@ -32,6 +35,7 @@ type
     kwargs : expr option;
     location : location
   } and
+  expr_Num = { n : int; location : location } and
   expr_Str = { s : string; location : location } and 
   expr_Name = { id : identifier; ctx : expr_context; location : location } and
   
@@ -71,6 +75,17 @@ let rec
   
   parse_stmt json =
     match json with
+      | `List [`String "Assign"; members_json; attributes_json] ->
+        let targets_json  = members_json |> member "targets" in
+        let value_json    = members_json |> member "value" in
+        
+        parse_expr_list    targets_json     >>= fun targets ->
+        parse_expr         value_json       >>= fun value ->
+        
+        parse_location      attributes_json >>= fun location ->
+        
+        Some (Assign { targets = targets; value = value; location = location })
+      
       | `List [`String "Expr"; members_json; attributes_json] ->
         let value_json    = members_json |> member "value" in
         
@@ -80,7 +95,7 @@ let rec
         
         Some (Expr { value = value; location = location })
       
-      | `List [`String unknown_type; _] ->
+      | `List [`String unknown_type; _; _] ->
         let () = printf "*** PyAst: unrecognized kind of stmt: %s\n" unknown_type in
         None
       
@@ -123,6 +138,18 @@ let rec
           location = location
         })
       
+      | `List [`String "Num"; members_json; attributes_json] ->
+        let n_json        = members_json |> member "n" in
+        
+        parse_location      attributes_json >>= fun location ->
+        
+        (match n_json with
+          | `Int n ->
+            Some (Num { n = n; location = location })
+          
+          | _ ->
+            None)
+      
       | `List [`String "Str"; members_json; attributes_json] ->
         let s_json        = members_json |> member "s" in
         
@@ -143,7 +170,7 @@ let rec
         
         Some (Name { id = id; ctx = ctx; location = location })
       
-      | `List [`String unknown_type; _] ->
+      | `List [`String unknown_type; _; _] ->
         let () = printf "*** PyAst: unrecognized kind of expr: %s\n" unknown_type in
         None
       
