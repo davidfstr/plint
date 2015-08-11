@@ -4,10 +4,10 @@ open Yojson.Basic.Util  (* for `member` *)
 
 (* === AST Types === *)
 type
-  ast =
-    | Module of ast_Module
+  pymod =
+    | Module of pymod_Module
     and
-  ast_Module = {
+  pymod_Module = {
     body : stmt list;
   } and
   
@@ -103,7 +103,7 @@ type
 
 (* === Parse AST from JSON === *)
 let rec
-  parse_ast json =
+  parse_pymod json =
     match json with
       | `List [`String "Module"; members_json] ->
         let body_json = members_json |> member "body" in
@@ -115,29 +115,29 @@ let rec
         })
       
       | `List [`String unknown_type; _; _] ->
-        let () = printf "*** PyAst: unrecognized kind of ast: %s\n" unknown_type in
+        let () = printf "*** PyAst: unrecognized kind of pymod: %s\n" unknown_type in
         None
       
       | _ ->
         None and
   
-  parse_ast_list json =
+  parse_pymod_list json =
     match json with
       | `List item_jsons ->
-        Option.all (List.map item_jsons parse_ast) >>= fun items ->
+        Option.all (List.map item_jsons parse_pymod) >>= fun items ->
         Some items
       
       | _ ->
         None and
   
-  parse_ast_option json =
+  parse_pymod_option json =
     match json with
       | `Null ->
         Some None
       
       | _ ->
-        parse_ast json >>= fun ast ->
-        Some (Some ast) and
+        parse_pymod json >>= fun pymod ->
+        Some (Some pymod) and
   
   parse_stmt json =
     match json with

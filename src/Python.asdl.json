@@ -1,5 +1,5 @@
 [
-    ["ast", [
+    ["pymod", [
         ["Module", "stmt_list", "body"]
     ]],
     

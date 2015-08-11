@@ -6,7 +6,7 @@ type ast = PyAst.stmt list
   with sexp
 
 let (parse_ast : Yojson.Basic.json -> ast option) json =
-  match (PyAst.parse_ast json) with
+  match (PyAst.parse_pymod json) with
     | Some (PyAst.Module { PyAst.body = stmts }) ->
       Some stmts
     
