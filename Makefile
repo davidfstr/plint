@@ -14,7 +14,7 @@ clean:
 # ------------------------------------------------------------------------------
 # Dependencies
 
-PlintTest.native: src/*.ml
+PlintTest.native: src/*.ml src/PyAst.ml
 	@# -w @8: Treat non-exhaustive pattern matching as an error
 	@# -w @26: Treat unused variables as an error
 	@# -w -30: Disables warnings about different record types sharing a key name
