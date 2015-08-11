@@ -1,6 +1,8 @@
 [
     ["stmt", [
+        ["Delete", "expr_list", "targets"],
         ["Assign", "expr_list", "targets", "expr", "value"],
+        ["AugAssign", "expr", "target", "operator", "op", "expr", "value"],
         ["Expr", "expr", "value"]
     ], "__LOCATION__"],
     
@@ -20,6 +22,11 @@
         ["AugLoad"],
         ["AugStore"],
         ["Param"]
+    ]],
+    
+    ["operator", [
+        ["Add"], ["Sub"], ["Mult"], ["Div"], ["Mod"], ["Pow"], ["LShift"],
+        ["RShift"], ["BitOr"], ["BitXor"], ["BitAnd"], ["FloorDiv"]
     ]],
     
     ["keyword", [
