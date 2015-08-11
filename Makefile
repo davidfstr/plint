@@ -21,3 +21,6 @@ PlintTest.native: src/*.ml
 	ocamlbuild -use-ocamlfind \
 		-cflags -w,@8@26-30 \
 		src/PlintTest.native
+
+src/PyAst.ml: src/make_python_ast_json_parser.py src/Python.asdl.json
+	(cd src; python3 make_python_ast_json_parser.py > PyAst.ml )
