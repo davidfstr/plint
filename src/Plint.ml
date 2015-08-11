@@ -118,6 +118,13 @@ let (exec : exec_context -> PyAst.stmt -> exec_context) context stmt =
       let step3 = eval_assign_list step2 targets in
       step3
     
+    | AugAssign { target = target; op = op; value = value } ->
+      let step0 = context in
+      let step1 = eval step0 target in
+      let step2 = eval step1 value in
+      let step3 = eval_assign step2 target in
+      step3
+    
     | Expr { value = value } ->
       eval context value
 

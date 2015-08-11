@@ -17,9 +17,11 @@ type
   stmt =
     | Delete of stmt_Delete
     | Assign of stmt_Assign
+    | AugAssign of stmt_AugAssign
     | Expr of stmt_Expr and
   stmt_Delete = { targets : expr list; location : location } and
   stmt_Assign = { targets : expr list; value : expr; location : location } and
+  stmt_AugAssign = { target : expr; op : operator; value : expr; location : location } and
   stmt_Expr = { value : expr; location : location } and
 
   (* TODO: Recognize remaining types of expr. 26 total. *)
@@ -45,6 +47,10 @@ type
   location = { lineno : int; col_offset : int } and
   
   expr_context = Load | Store | Del | AugLoad | AugStore | Param and
+  
+  operator = 
+    Add | Sub | Mult | Div | Mod | Pow | LShift |
+    RShift | BitOr | BitXor | BitAnd | FloorDiv and
 
   keyword = { arg : identifier; value : expr } and
   
@@ -68,7 +74,7 @@ let rec
       | `List [`String "Module"; members_json] ->
         let body_json     = members_json |> member "body" in
         
-        parse_stmt_list    body_json       >>= fun body ->
+        parse_stmt_list     body_json       >>= fun body ->
         
         Some body
       
@@ -80,7 +86,7 @@ let rec
       | `List [`String "Delete"; members_json; attributes_json] ->
         let targets_json  = members_json |> member "targets" in
         
-        parse_expr_list    targets_json     >>= fun targets ->
+        parse_expr_list     targets_json    >>= fun targets ->
         
         parse_location      attributes_json >>= fun location ->
         
@@ -90,12 +96,25 @@ let rec
         let targets_json  = members_json |> member "targets" in
         let value_json    = members_json |> member "value" in
         
-        parse_expr_list    targets_json     >>= fun targets ->
-        parse_expr         value_json       >>= fun value ->
+        parse_expr_list     targets_json    >>= fun targets ->
+        parse_expr          value_json      >>= fun value ->
         
         parse_location      attributes_json >>= fun location ->
         
         Some (Assign { targets = targets; value = value; location = location })
+      
+      | `List [`String "AugAssign"; members_json; attributes_json] ->
+        let target_json   = members_json |> member "target" in
+        let op_json       = members_json |> member "op" in
+        let value_json    = members_json |> member "value" in
+        
+        parse_expr          target_json     >>= fun target ->
+        parse_operator      op_json         >>= fun op ->
+        parse_expr          value_json      >>= fun value ->
+        
+        parse_location      attributes_json >>= fun location ->
+        
+        Some (AugAssign { target = target; op = op; value = value; location = location })
       
       | `List [`String "Expr"; members_json; attributes_json] ->
         let value_json    = members_json |> member "value" in
@@ -224,6 +243,22 @@ let rec
       | `List [`String "AugLoad"; `Assoc []]  -> Some AugLoad
       | `List [`String "AugStore"; `Assoc []] -> Some AugStore
       | `List [`String "Param"; `Assoc []]    -> Some Param
+      | _                                     -> None and
+  
+  parse_operator json =
+    match json with
+      | `List [`String "Add"; `Assoc []]      -> Some Add
+      | `List [`String "Sub"; `Assoc []]      -> Some Sub
+      | `List [`String "Mult"; `Assoc []]     -> Some Mult
+      | `List [`String "Div"; `Assoc []]      -> Some Div
+      | `List [`String "Mod"; `Assoc []]      -> Some Mod
+      | `List [`String "Pow"; `Assoc []]      -> Some Pow
+      | `List [`String "LShift"; `Assoc []]   -> Some LShift
+      | `List [`String "RShift"; `Assoc []]   -> Some RShift
+      | `List [`String "BitOr"; `Assoc []]    -> Some BitOr
+      | `List [`String "BitXor"; `Assoc []]   -> Some BitXor
+      | `List [`String "BitAnd"; `Assoc []]   -> Some BitAnd
+      | `List [`String "FloorDiv"; `Assoc []] -> Some FloorDiv
       | _                                     -> None and
   
   parse_keyword json =

@@ -164,6 +164,12 @@ let test_fixture = "Plint" >:::
       ]
       (Plint.check "src/test_data/bad_5_read_deleted_var.py")
   );
+  
+  "test_passes_augmented_assignment" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_5_augmented_assignment.py")
+  );
 ]
 
 
