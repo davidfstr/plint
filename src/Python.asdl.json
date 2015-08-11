@@ -1,0 +1,28 @@
+[
+    ["stmt", [
+        ["Assign", "expr_list", "targets", "expr", "value"],
+        ["Expr", "expr", "value"]
+    ], "__LOCATION__"],
+    
+    ["expr", [
+        ["Call",
+            "expr", "func", "expr_list", "args", "keyword_list", "keywords",
+            "expr_option", "starargs", "expr_option", "kwargs"],
+        ["Num", "int", "n"],
+        ["Str", "string", "s"],
+        ["Name", "identifier", "id", "expr_context", "ctx"]
+    ], "__LOCATION__"],
+    
+    ["expr_context", [
+        ["Load"],
+        ["Store"],
+        ["Del"],
+        ["AugLoad"],
+        ["AugStore"],
+        ["Param"]
+    ]],
+    
+    ["keyword", [
+        ["keyword", "identifier", "arg", "expr", "value"]
+    ]]
+]
