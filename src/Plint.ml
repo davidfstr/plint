@@ -45,16 +45,15 @@ let rec
                 line = location.lineno;
                 exn = "NameError: name '" ^ id ^ "' is not defined"
               } in
-              { names = context.names; errors = new_error :: context.errors }
+              { context with errors = new_error :: context.errors }
           
           | Store
           | AugStore
           | Param -> 
-            { names = BatSet.add id context.names; errors = context.errors }
+            context
           
           | Del ->
-            (* TODO: Test *)
-            { names = BatSet.remove id context.names; errors = context.errors }
+            context
         )
     and
   
@@ -69,6 +68,35 @@ let rec
   (eval_list : exec_context -> PyAst.expr list -> exec_context) context expr_list =
     BatList.fold_left eval context expr_list
 
+let (eval_assign : exec_context -> PyAst.expr -> exec_context) context expr =
+  let open PyAst in
+  match expr with
+    (* TODO: Recognize remaining exprs valid in assignment context. 6 total. *)
+    | Name { id = id; ctx = ctx; location = location } ->
+      (match ctx with
+        | Load
+        | AugLoad ->
+          let new_error = {
+            line = location.lineno;
+            exn = "SystemError: Name in Assign stmt marked as ctx=Load|AssignLoad"
+          } in
+          { context with errors = new_error :: context.errors }
+        
+        | Store
+        | AugStore
+        | Param -> 
+          { context with names = BatSet.add id context.names }
+        
+        | Del ->
+          { context with names = BatSet.remove id context.names }
+      )
+    
+    (* Ignore all expr types that aren't valid in an assign context *)
+    | Call _
+    | Num _
+    | Str _ ->
+      context
+
 let (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
   let open PyAst in
   match stmt with
@@ -76,7 +104,8 @@ let (exec : exec_context -> PyAst.stmt -> exec_context) context stmt =
       let step0 = context in
       let step1 = eval_list step0 targets in
       let step2 = eval step1 value in
-      step2
+      let step3 = BatList.fold_left eval_assign step2 targets in
+      step3
     
     | Expr { value = value } ->
       eval context value

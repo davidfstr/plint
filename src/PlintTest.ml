@@ -59,18 +59,15 @@ let test_fixture = "Plint" >:::
   );
   
   "test_flags_misspelled_function_invocation" >:: ( fun () ->
-    let actual_errors = Plint.check "src/test_data/bad_1_prnt.py" in
-    
     let open Plint in
-    let expected_errors = [
-      {
-        line = 1;
-        exn = "NameError: name 'prnt' is not defined"
-      }
-    ] in
-    
     assert_equal ~printer:Plint.string_of_error_list
-      expected_errors actual_errors
+      [
+        {
+          line = 1;
+          exn = "NameError: name 'prnt' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_1_prnt.py")
   );
   
   "test_flags_multiple_errors" >:: ( fun () ->
@@ -124,6 +121,30 @@ let test_fixture = "Plint" >:::
     assert_equal ~printer:Plint.string_of_error_list
       []
       (Plint.check "src/test_data/ok_3_read_assigned_var.py")
+  );
+  
+  "test_flags_read_of_unassigned_var" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 1;
+          exn = "NameError: name 'x' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_3_read_unassigned_var.py")
+  );
+  
+  "test_flags_read_of_unassigned_self" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 1;
+          exn = "NameError: name 'x' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_4_read_unassigned_self.py")
   );
 ]
 
