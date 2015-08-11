@@ -15,8 +15,10 @@ type
   (* TODO: Recognize remaining types of stmt. 19 total. *)
   (* All stmts additionally track their location. *)
   stmt =
+    | Delete of stmt_Delete
     | Assign of stmt_Assign
     | Expr of stmt_Expr and
+  stmt_Delete = { targets : expr list; location : location } and
   stmt_Assign = { targets : expr list; value : expr; location : location } and
   stmt_Expr = { value : expr; location : location } and
 
@@ -75,6 +77,15 @@ let rec
   
   parse_stmt json =
     match json with
+      | `List [`String "Delete"; members_json; attributes_json] ->
+        let targets_json  = members_json |> member "targets" in
+        
+        parse_expr_list    targets_json     >>= fun targets ->
+        
+        parse_location      attributes_json >>= fun location ->
+        
+        Some (Delete { targets = targets; location = location })
+      
       | `List [`String "Assign"; members_json; attributes_json] ->
         let targets_json  = members_json |> member "targets" in
         let value_json    = members_json |> member "value" in

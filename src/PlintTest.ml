@@ -146,6 +146,24 @@ let test_fixture = "Plint" >:::
       ]
       (Plint.check "src/test_data/bad_4_read_unassigned_self.py")
   );
+  
+  "test_passes_del" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_4_del.py")
+  );
+  
+  "test_flags_read_of_deleted_var" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 3;
+          exn = "NameError: name 'x' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_5_read_deleted_var.py")
+  );
 ]
 
 
