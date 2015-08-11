@@ -1,4 +1,8 @@
 [
+    ["ast", [
+        ["Module", "stmt_list", "body"]
+    ]],
+    
     ["stmt", [
         ["Delete", "expr_list", "targets"],
         ["Assign", "expr_list", "targets", "expr", "value"],
