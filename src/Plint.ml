@@ -137,7 +137,8 @@ let rec
         let step2b = exec_list step1_noerr orelse in
         let step3 = {
           names = BatSet.intersect step2a.names step2b.names;
-          errors = step1.errors @ step2a.errors @ step2b.errors
+          (* Concat in reverse order since error list is reversed *)
+          errors = step2b.errors @ step2a.errors @ step1.errors
         } in
         step3
       
