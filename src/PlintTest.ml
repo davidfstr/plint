@@ -109,7 +109,7 @@ let test_fixture = "Plint" >:::
       expected_description actual_description
   );
   
-  (* Assignment *)
+  (* Assignment & Variables *)
   
   "test_passes_assignment" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
@@ -169,6 +169,26 @@ let test_fixture = "Plint" >:::
     assert_equal ~printer:Plint.string_of_error_list
       []
       (Plint.check "src/test_data/ok_5_augmented_assignment.py")
+  );
+  
+  (* Conditionals *)
+  
+  "test_passes_conditional" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_6_conditional.py")
+  );
+  
+  "test_flags_read_of_potentially_unassigned_var" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 5;
+          exn = "NameError: name 'x' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_6_read_potentially_unassigned_var.py")
   );
 ]
 

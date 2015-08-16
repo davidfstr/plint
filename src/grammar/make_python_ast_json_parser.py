@@ -219,6 +219,14 @@ print('''
       | _ ->
         None and
   
+  parse_bool json =
+    match json with
+      | `Bool b ->
+        Some b
+      
+      | _ ->
+        None and
+  
   parse_location attributes_json =
     match attributes_json with
       | `Assoc [("lineno", `Int lineno); ("col_offset", `Int col_offset)] ->

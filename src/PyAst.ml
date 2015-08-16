@@ -27,7 +27,11 @@ let (parse_ast_of_file_as_json : string -> Yojson.Basic.json) py_filepath =
 (** Parses a .py file to an `ast`. *)
 let (parse_ast_of_file : string -> ast option) py_filepath =
   let json = parse_ast_of_file_as_json py_filepath in
-  parse_ast json
+  let result = parse_ast json in
+  let () = match result with
+    | None -> printf "*** PyAst: parse_ast failed on: %s\n" (Yojson.Basic.to_string json)
+    | Some _ -> () in
+  result
 
 (** Formats an ast as a printable string. *)
 let (string_of_ast : ast -> string) ast =

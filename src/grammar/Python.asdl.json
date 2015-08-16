@@ -7,6 +7,9 @@
         ["Delete", "expr_list", "targets"],
         ["Assign", "expr_list", "targets", "expr", "value"],
         ["AugAssign", "expr", "target", "operator", "op", "expr", "value"],
+        
+        ["If", "expr", "test", "stmt_list", "body", "stmt_list", "orelse"],
+        
         ["Expr", "expr", "value"]
     ], "__LOCATION__"],
     
@@ -16,6 +19,8 @@
             "expr_option", "starargs", "expr_option", "kwargs"],
         ["Num", "int", "n"],
         ["Str", "string", "s"],
+        ["NameConstant", "bool", "value"],
+        
         ["Name", "identifier", "id", "expr_context", "ctx"]
     ], "__LOCATION__"],
     

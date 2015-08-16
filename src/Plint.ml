@@ -31,10 +31,9 @@ let rec
         let step5 = eval_option step4 kwargs in
         step5
       
-      | Num { n = n } ->
-        context
-      
-      | Str { s = s } ->
+      | Num { n = _ }
+      | Str { s = _ }
+      | NameConstant { value = _ } ->
         context
       
       | Name { id = id; ctx = ctx; location = location } ->
@@ -98,38 +97,55 @@ let rec
       (* Ignore all expr types that aren't valid in an assign context *)
       | Call _
       | Num _
-      | Str _ ->
+      | Str _
+      | NameConstant _ ->
         context
     and
   
   (eval_assign_list : exec_context -> PyAst.expr list -> exec_context) context targets =
     BatList.fold_left eval_assign context targets
 
-let (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
-  let open PyAst in
-  match stmt with
-    | Delete { targets = targets } ->
-      let step0 = context in
-      let step1 = eval_list step0 targets in
-      let step2 = eval_assign_list step1 targets in
-      step2
-    
-    | Assign { targets = targets; value = value } ->
-      let step0 = context in
-      let step1 = eval_list step0 targets in
-      let step2 = eval step1 value in
-      let step3 = eval_assign_list step2 targets in
-      step3
-    
-    | AugAssign { target = target; op = op; value = value } ->
-      let step0 = context in
-      let step1 = eval step0 target in
-      let step2 = eval step1 value in
-      let step3 = eval_assign step2 target in
-      step3
-    
-    | Expr { value = value } ->
-      eval context value
+let rec
+  (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
+    let open PyAst in
+    match stmt with
+      | Delete { targets = targets } ->
+        let step0 = context in
+        let step1 = eval_list step0 targets in
+        let step2 = eval_assign_list step1 targets in
+        step2
+      
+      | Assign { targets = targets; value = value } ->
+        let step0 = context in
+        let step1 = eval_list step0 targets in
+        let step2 = eval step1 value in
+        let step3 = eval_assign_list step2 targets in
+        step3
+      
+      | AugAssign { target = target; op = op; value = value } ->
+        let step0 = context in
+        let step1 = eval step0 target in
+        let step2 = eval step1 value in
+        let step3 = eval_assign step2 target in
+        step3
+      
+      | If { test = test; body = body; orelse = orelse } ->
+        let step0 = context in
+        let step1 = eval step0 test in
+        let step1_noerr = { step1 with errors = [] } in
+        let step2a = exec_list step1_noerr body in
+        let step2b = exec_list step1_noerr orelse in
+        let step3 = {
+          names = BatSet.intersect step2a.names step2b.names;
+          errors = step1.errors @ step2a.errors @ step2b.errors
+        } in
+        step3
+      
+      | Expr { value = value } ->
+        eval context value and
+  
+  (exec_list : exec_context -> PyAst.stmt list -> exec_context) context stmt_list =
+    BatList.fold_left exec context stmt_list
 
 (** Checks the specified Python source file for errors. *)
 let (check : string -> error list) py_filepath =
@@ -143,7 +159,7 @@ let (check : string -> error list) py_filepath =
       
       let builtins = ["print"] in
       let initial_context = { names = BatSet.of_list builtins; errors = [] } in
-      let final_context = BatList.fold_left exec initial_context stmts in
+      let final_context = exec_list initial_context stmts in
       
       let { errors = final_errors } = final_context in
       BatList.rev final_errors  (* order errors from first to last *)
