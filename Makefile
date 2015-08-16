@@ -22,5 +22,5 @@ PlintTest.native: src/*.ml src/PyAstGrammar.ml
 		-cflags -w,@8@26-30 \
 		src/PlintTest.native
 
-src/PyAstGrammar.ml: src/make_python_ast_json_parser.py src/Python.asdl.json
-	(cd src; python3 make_python_ast_json_parser.py > PyAstGrammar.ml )
+src/PyAstGrammar.ml: src/grammar/make_python_ast_json_parser.py src/grammar/Python.asdl.json
+	(cd src/grammar; python3 make_python_ast_json_parser.py > ../PyAstGrammar.ml )

@@ -19,7 +19,7 @@ let (parse_ast : Yojson.Basic.json -> ast option) json =
 (** Parses a .py file to a JSON AST. *)
 let (parse_ast_of_file_as_json : string -> Yojson.Basic.json) py_filepath =
   (* TODO: Escape shell metacharacters and similar *)
-  let shell_command = "python3 src/parse_ast.py " ^ py_filepath in
+  let shell_command = "python3 src/grammar/parse_ast.py " ^ py_filepath in
   let json_string = Subprocess.check_output shell_command in
   let json = Yojson.Basic.from_string json_string in
   json
