@@ -15,7 +15,7 @@ let test_fixture = "Plint" >:::
     let ast_option = PyAst.parse_ast_of_file "src/test_data/ok_1_print.py" in
     
     let open PyAst in
-    let (expected_ast : ast) = 
+    let (expected_ast : PyAst.ast) = 
       [
         Expr {
           value = Call {
@@ -46,7 +46,7 @@ let test_fixture = "Plint" >:::
       | None ->
         assert_failure (
           "Could not parse generated AST JSON. " ^
-          "Maybe missing some parse rules in PyAst.ml?"
+          "Maybe missing some parse rules in PyAstGrammar.ml?"
         )
   );
   

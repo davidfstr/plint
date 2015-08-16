@@ -20,6 +20,9 @@ let rec
         starargs = starargs;
         kwargs = kwargs
       } ->
+        let (keyword_values : keyword list -> expr list) keywords =
+          BatList.map (fun (k : keyword) -> k.value) keywords in
+        
         let step0 = context in
         let step1 = eval step0 func in
         let step2 = BatList.fold_left eval step1 args in

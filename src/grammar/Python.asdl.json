@@ -1,0 +1,39 @@
+[
+    ["pymod", [
+        ["Module", "stmt_list", "body"]
+    ]],
+    
+    ["stmt", [
+        ["Delete", "expr_list", "targets"],
+        ["Assign", "expr_list", "targets", "expr", "value"],
+        ["AugAssign", "expr", "target", "operator", "op", "expr", "value"],
+        ["Expr", "expr", "value"]
+    ], "__LOCATION__"],
+    
+    ["expr", [
+        ["Call",
+            "expr", "func", "expr_list", "args", "keyword_list", "keywords",
+            "expr_option", "starargs", "expr_option", "kwargs"],
+        ["Num", "int", "n"],
+        ["Str", "string", "s"],
+        ["Name", "identifier", "id", "expr_context", "ctx"]
+    ], "__LOCATION__"],
+    
+    ["expr_context", [
+        ["Load"],
+        ["Store"],
+        ["Del"],
+        ["AugLoad"],
+        ["AugStore"],
+        ["Param"]
+    ]],
+    
+    ["operator", [
+        ["Add"], ["Sub"], ["Mult"], ["Div"], ["Mod"], ["Pow"], ["LShift"],
+        ["RShift"], ["BitOr"], ["BitXor"], ["BitAnd"], ["FloorDiv"]
+    ]],
+    
+    ["keyword", [
+        ["keyword", "identifier", "arg", "expr", "value"]
+    ]]
+]
