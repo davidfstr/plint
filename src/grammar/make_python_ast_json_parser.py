@@ -88,14 +88,14 @@ for variant in variants:
     if not variant['is_inline']:
         print('  %s =' % variant['name'])
         for case in variant['cases']:
-            if len(case['members']) > 0:
-                print('    | %s of %s_%s' % (case['name'], variant['name'], case['name']))
-            else:
+            if len(case['members']) == 0 and not variant['has_location']:
                 print('    | %s' % (case['name']))
+            else:
+                print('    | %s of %s_%s' % (case['name'], variant['name'], case['name']))
         print('    and')
     
     for case in variant['cases']:
-        if len(case['members']) == 0:
+        if len(case['members']) == 0 and not variant['has_location']:
             continue
         
         if variant['is_inline']:
@@ -130,7 +130,7 @@ for variant in variants:
     print('    match json with')
     for case in variant['cases']:
         print('      | `List [`String "%s"; members_json%s] ->' % (case['name'], '; attributes_json' if variant['has_location'] else ''))
-        if len(case['members']) == 0:
+        if len(case['members']) == 0 and not variant['has_location']:
             print('        Some %s' % case['name'])
         else:
             for member in case['members']:

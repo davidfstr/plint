@@ -112,6 +112,10 @@ let rec
   (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
     let open PyAst in
     match stmt with
+      | FunctionDef { name = name; args = args; body = body;
+                      decorator_list = decorator_list; returns = returns } ->
+        context
+      
       | Delete { targets = targets } ->
         let step0 = context in
         let step1 = eval_list step0 targets in
@@ -222,7 +226,12 @@ let rec
         step3
       
       | Expr { value = value } ->
-        eval context value and
+        eval context value
+      
+      | Pass { location = location } ->
+        context
+      
+    and
   
   (exec_list : exec_context -> PyAst.stmt list -> exec_context) context stmt_list =
     BatList.fold_left exec context stmt_list

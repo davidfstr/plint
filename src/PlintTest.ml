@@ -270,6 +270,14 @@ let test_fixture = "Plint" >:::
       ]
       (Plint.check "src/test_data/bad_10_errors_in_loop.py")
   );
+  
+  (* Functions *)
+  
+  "test_passes_func_def" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_08_func_def.py")
+  );
 ]
 
 

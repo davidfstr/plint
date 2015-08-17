@@ -4,6 +4,13 @@
     ]],
     
     ["stmt", [
+        ["FunctionDef",
+            "identifier", "name",
+            "arguments", "args",
+            "stmt_list", "body",
+            "expr_list", "decorator_list",
+            "expr_option", "returns"],
+        
         ["Delete", "expr_list", "targets"],
         ["Assign", "expr_list", "targets", "expr", "value"],
         ["AugAssign", "expr", "target", "operator", "op", "expr", "value"],
@@ -11,7 +18,8 @@
         ["While", "expr", "test", "stmt_list", "body", "stmt_list", "orelse"],
         ["If", "expr", "test", "stmt_list", "body", "stmt_list", "orelse"],
         
-        ["Expr", "expr", "value"]
+        ["Expr", "expr", "value"],
+        ["Pass"]
     ], "__LOCATION__"],
     
     ["expr", [
@@ -38,6 +46,20 @@
         ["Add"], ["Sub"], ["Mult"], ["Div"], ["Mod"], ["Pow"], ["LShift"],
         ["RShift"], ["BitOr"], ["BitXor"], ["BitAnd"], ["FloorDiv"]
     ]],
+    
+    ["arguments", [
+        ["arguments",
+            "arg_list", "args",
+            "arg_option", "vararg",
+            "arg_list", "kwonlyargs",
+            "expr_list", "kw_defaults",
+            "arg_option", "kwarg",
+            "expr_list", "defaults"]
+    ]],
+    
+    ["arg", [
+        ["arg", "identifier", "arg", "expr_option", "annotation"]
+    ], "__LOCATION__"],
     
     ["keyword", [
         ["keyword", "identifier", "arg", "expr", "value"]
