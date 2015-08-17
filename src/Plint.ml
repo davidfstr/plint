@@ -219,8 +219,13 @@ let (check : string -> error list) py_filepath =
       let initial_context = { names = BatSet.of_list builtins; errors = [] } in
       let final_context = exec_list initial_context stmts in
       
-      let { errors = final_errors } = final_context in
-      BatList.rev final_errors  (* order errors from first to last *)
+      let { errors = errors0 } = final_context in
+      (* Order errors from first to last *)
+      let errors1 = BatList.rev errors0 in
+      (* Deduplicate errors *)
+      (* PERF: Takes O(n^2) time but could be optimized to O(n) time *)
+      let errors2 = BatList.unique errors1 in
+      errors2
 
 (** Formats a human-readable description of the specified error. *)
 let (descripton_of_error : error -> string) error =

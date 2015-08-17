@@ -234,6 +234,18 @@ let test_fixture = "Plint" >:::
       ]
       (Plint.check "src/test_data/bad_8_read_potentially_unassigned_var_in_loop.py")
   );
+  
+  "test_flags_error_in_loop_only_once" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 4;
+          exn = "NameError: name 'missing' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_9_error_in_loop_reported_once.py")
+  );
 ]
 
 
