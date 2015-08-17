@@ -4,4 +4,6 @@ while True:
     x = 2
     y = missing
     del x
+else:
+    y = missing
 y = missing

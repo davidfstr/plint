@@ -260,7 +260,11 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'missing' is not defined"
         };
         {
-          line = 7;
+          line = 8;
+          exn = "NameError: name 'missing' is not defined"
+        };
+        {
+          line = 9;
           exn = "NameError: name 'missing' is not defined"
         }
       ]

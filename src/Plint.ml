@@ -159,6 +159,7 @@ let rec
               merge join_point future_context
           ) in
         
+        (* Execute loop condition and body until final environment deduced *)
         let k_max_distinct_loop_iterations = 2 in
         let i = ref 0 in
         while (!join_points_were_changed) do
@@ -187,6 +188,7 @@ let rec
             let step0 = !condition_join_point in
             let step1 = eval step0 test in
             merge_nullable nullable_exit_join_point step1 ;
+            
             let step2 = exec_list step1 body in
             merge condition_join_point step2 ;
             
@@ -194,13 +196,17 @@ let rec
           )
         done ;
         
-        (match !nullable_exit_join_point with
+        let exit_context = (match !nullable_exit_join_point with
           | Some exit_join_point ->
             !exit_join_point
           
           | None ->
             assert false
-        )
+        ) in
+        
+        (* Execute else-block if present *)
+        (* NOTE: Shouldn't execute this if loop exited due to a break statement *)
+        exec_list exit_context orelse
       
       | If { test = test; body = body; orelse = orelse } ->
         let step0 = context in
