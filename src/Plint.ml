@@ -132,7 +132,7 @@ let rec
         let step3 = eval_assign step2 target in
         step3
       
-      | While { test = test; body = body; orelse = orelse } ->
+      | While { test = test; body = body; orelse = orelse; location = location } ->
         let condition_join_point = ref context in
         let nullable_exit_join_point = ref None in
         let join_points_were_changed = ref true in
@@ -162,8 +162,24 @@ let rec
         let k_max_distinct_loop_iterations = 2 in
         let i = ref 0 in
         while (!join_points_were_changed) do
-          (if (!i > k_max_distinct_loop_iterations) then
-            (* Force exit of loop *)
+          (if (!i >= k_max_distinct_loop_iterations) then
+            (* Append error to final result *)
+            let new_error = {
+              line = location.lineno;
+              exn = sprintf "SystemError: could not compute final type environment for loop within %d iterations" k_max_distinct_loop_iterations
+            } in
+            (match !nullable_exit_join_point with
+              | Some exit_join_point ->
+                exit_join_point := {
+                  !exit_join_point with
+                  errors = new_error :: (!exit_join_point).errors
+                }
+              
+              | None ->
+                assert false
+            ) ;
+            
+            (* Force exit of loop and return of final result *)
             join_points_were_changed := false
           else
             join_points_were_changed := false ;
