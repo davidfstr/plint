@@ -5,14 +5,14 @@ let test_fixture = "Plint" >:::
   (* Parse AST *)
   
   "test_can_parse_simple_ast_as_json_in_expected_format" >:: ( fun () ->
-    let expected_ast_json = Yojson.Basic.from_file "src/test_data/ok_1_print.py.ast" in
-    let actual_ast_json = PyAst.parse_ast_of_file_as_json "src/test_data/ok_1_print.py" in
+    let expected_ast_json = Yojson.Basic.from_file "src/test_data/ok_01_print.py.ast" in
+    let actual_ast_json = PyAst.parse_ast_of_file_as_json "src/test_data/ok_01_print.py" in
     assert_equal ~printer:Yojson.Basic.to_string
       expected_ast_json actual_ast_json
   );
   
   "test_can_parse_simple_ast" >:: ( fun () ->
-    let ast_option = PyAst.parse_ast_of_file "src/test_data/ok_1_print.py" in
+    let ast_option = PyAst.parse_ast_of_file "src/test_data/ok_01_print.py" in
     
     let open PyAst in
     let (expected_ast : PyAst.ast) = 
@@ -55,7 +55,7 @@ let test_fixture = "Plint" >:::
   "test_passes_simple_program" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
       []
-      (Plint.check "src/test_data/ok_1_print.py")
+      (Plint.check "src/test_data/ok_01_print.py")
   );
   
   "test_flags_misspelled_function_invocation" >:: ( fun () ->
@@ -67,11 +67,11 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'prnt' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_1_prnt.py")
+      (Plint.check "src/test_data/bad_01_prnt.py")
   );
   
   "test_flags_multiple_errors" >:: ( fun () ->
-    let actual_errors = Plint.check "src/test_data/bad_2_prnt_prnt.py" in
+    let actual_errors = Plint.check "src/test_data/bad_02_prnt_prnt.py" in
     
     let open Plint in
     let expected_errors = [
@@ -114,13 +114,13 @@ let test_fixture = "Plint" >:::
   "test_passes_assignment" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
       []
-      (Plint.check "src/test_data/ok_2_assignment.py")
+      (Plint.check "src/test_data/ok_02_assignment.py")
   );
   
   "test_passes_read_of_assigned_var" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
       []
-      (Plint.check "src/test_data/ok_3_read_assigned_var.py")
+      (Plint.check "src/test_data/ok_03_read_assigned_var.py")
   );
   
   "test_flags_read_of_unassigned_var" >:: ( fun () ->
@@ -132,7 +132,7 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'x' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_3_read_unassigned_var.py")
+      (Plint.check "src/test_data/bad_03_read_unassigned_var.py")
   );
   
   "test_flags_read_of_unassigned_self" >:: ( fun () ->
@@ -144,13 +144,13 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'x' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_4_read_unassigned_self.py")
+      (Plint.check "src/test_data/bad_04_read_unassigned_self.py")
   );
   
   "test_passes_del" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
       []
-      (Plint.check "src/test_data/ok_4_del.py")
+      (Plint.check "src/test_data/ok_04_del.py")
   );
   
   "test_flags_read_of_deleted_var" >:: ( fun () ->
@@ -162,13 +162,13 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'x' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_5_read_deleted_var.py")
+      (Plint.check "src/test_data/bad_05_read_deleted_var.py")
   );
   
   "test_passes_augmented_assignment" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
       []
-      (Plint.check "src/test_data/ok_5_augmented_assignment.py")
+      (Plint.check "src/test_data/ok_05_augmented_assignment.py")
   );
   
   (* Conditionals *)
@@ -176,7 +176,7 @@ let test_fixture = "Plint" >:::
   "test_passes_conditional" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
       []
-      (Plint.check "src/test_data/ok_6_conditional.py")
+      (Plint.check "src/test_data/ok_06_conditional.py")
   );
   
   "test_flags_read_of_potentially_unassigned_var_in_if" >:: ( fun () ->
@@ -188,7 +188,7 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'x' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_6_read_potentially_unassigned_var_in_if.py")
+      (Plint.check "src/test_data/bad_06_read_potentially_unassigned_var_in_if.py")
   );
   
   "test_flags_errors_in_all_parts_of_conditional" >:: ( fun () ->
@@ -212,7 +212,7 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'missing' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_7_errors_in_if.py")
+      (Plint.check "src/test_data/bad_07_errors_in_if.py")
   );
   
   (* Loops *)
@@ -220,7 +220,7 @@ let test_fixture = "Plint" >:::
   "test_passes_while_loop" >:: ( fun () ->
     assert_equal ~printer:Plint.string_of_error_list
       []
-      (Plint.check "src/test_data/ok_7_loop.py")
+      (Plint.check "src/test_data/ok_07_loop.py")
   );
   
   "test_flags_read_of_potentially_unassigned_var_in_loop" >:: ( fun () ->
@@ -232,7 +232,7 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'y' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_8_read_potentially_unassigned_var_in_loop.py")
+      (Plint.check "src/test_data/bad_08_read_potentially_unassigned_var_in_loop.py")
   );
   
   "test_flags_error_in_loop_only_once" >:: ( fun () ->
@@ -244,7 +244,7 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'missing' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_9_error_in_loop_reported_once.py")
+      (Plint.check "src/test_data/bad_09_error_in_loop_reported_once.py")
   );
   
   "test_flags_errors_in_all_parts_of_loop" >:: ( fun () ->
