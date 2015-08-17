@@ -105,6 +105,9 @@ let rec
   (eval_assign_list : exec_context -> PyAst.expr list -> exec_context) context targets =
     BatList.fold_left eval_assign context targets
 
+let (string_of_exec_context : exec_context -> string) context =
+  Sexp.to_string (sexp_of_list sexp_of_string (BatSet.to_list context.names))
+
 let rec
   (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
     let open PyAst in
@@ -128,6 +131,82 @@ let rec
         let step2 = eval step1 value in
         let step3 = eval_assign step2 target in
         step3
+      
+      | While { test = test; body = body; orelse = orelse; location = location } ->
+        let condition_join_point = ref context in
+        let nullable_exit_join_point = ref None in
+        let join_points_were_changed = ref true in
+        
+        let (merge : exec_context ref -> exec_context -> unit) join_point future_context =
+          let merged = {
+            names = BatSet.intersect (!join_point).names future_context.names;
+            errors = future_context.errors
+          } in
+          (if not (BatSet.equal (!join_point).names merged.names) then
+            join_points_were_changed := true
+          else
+            ()
+          ) ;
+          join_point := merged in
+        
+        let (merge_nullable : ((exec_context ref) option) ref -> exec_context -> unit) nullable_join_point future_context =
+          (match !nullable_join_point with
+            | None ->
+              nullable_join_point := Some { contents = future_context } ;
+              join_points_were_changed := true
+            
+            | Some join_point ->
+              merge join_point future_context
+          ) in
+        
+        (* Execute loop condition and body until final environment deduced *)
+        let k_max_distinct_loop_iterations = 2 in
+        let i = ref 0 in
+        while (!join_points_were_changed) do
+          (if (!i >= k_max_distinct_loop_iterations) then
+            (* Append error to final result *)
+            let new_error = {
+              line = location.lineno;
+              exn = sprintf "SystemError: could not compute final type environment for loop within %d iterations" k_max_distinct_loop_iterations
+            } in
+            (match !nullable_exit_join_point with
+              | Some exit_join_point ->
+                exit_join_point := {
+                  !exit_join_point with
+                  errors = new_error :: (!exit_join_point).errors
+                }
+              
+              | None ->
+                assert false
+            ) ;
+            
+            (* Force exit of loop and return of final result *)
+            join_points_were_changed := false
+          else
+            join_points_were_changed := false ;
+            
+            let step0 = !condition_join_point in
+            let step1 = eval step0 test in
+            merge_nullable nullable_exit_join_point step1 ;
+            
+            let step2 = exec_list step1 body in
+            merge condition_join_point step2 ;
+            
+            i := !i + 1
+          )
+        done ;
+        
+        let exit_context = (match !nullable_exit_join_point with
+          | Some exit_join_point ->
+            !exit_join_point
+          
+          | None ->
+            assert false
+        ) in
+        
+        (* Execute else-block if present *)
+        (* NOTE: Shouldn't execute this if loop exited due to a break statement *)
+        exec_list exit_context orelse
       
       | If { test = test; body = body; orelse = orelse } ->
         let step0 = context in
@@ -162,8 +241,13 @@ let (check : string -> error list) py_filepath =
       let initial_context = { names = BatSet.of_list builtins; errors = [] } in
       let final_context = exec_list initial_context stmts in
       
-      let { errors = final_errors } = final_context in
-      BatList.rev final_errors  (* order errors from first to last *)
+      let { errors = errors0 } = final_context in
+      (* Order errors from first to last *)
+      let errors1 = BatList.rev errors0 in
+      (* Deduplicate errors *)
+      (* PERF: Takes O(n^2) time but could be optimized to O(n) time *)
+      let errors2 = BatList.unique errors1 in
+      errors2
 
 (** Formats a human-readable description of the specified error. *)
 let (descripton_of_error : error -> string) error =

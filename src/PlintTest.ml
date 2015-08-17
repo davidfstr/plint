@@ -179,7 +179,7 @@ let test_fixture = "Plint" >:::
       (Plint.check "src/test_data/ok_6_conditional.py")
   );
   
-  "test_flags_read_of_potentially_unassigned_var" >:: ( fun () ->
+  "test_flags_read_of_potentially_unassigned_var_in_if" >:: ( fun () ->
     let open Plint in
     assert_equal ~printer:Plint.string_of_error_list
       [
@@ -188,7 +188,7 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'x' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_6_read_potentially_unassigned_var.py")
+      (Plint.check "src/test_data/bad_6_read_potentially_unassigned_var_in_if.py")
   );
   
   "test_flags_errors_in_all_parts_of_conditional" >:: ( fun () ->
@@ -212,7 +212,63 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'missing' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_7_errors_in_conditional.py")
+      (Plint.check "src/test_data/bad_7_errors_in_if.py")
+  );
+  
+  (* Loops *)
+  
+  "test_passes_while_loop" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_7_loop.py")
+  );
+  
+  "test_flags_read_of_potentially_unassigned_var_in_loop" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 4;
+          exn = "NameError: name 'y' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_8_read_potentially_unassigned_var_in_loop.py")
+  );
+  
+  "test_flags_error_in_loop_only_once" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 4;
+          exn = "NameError: name 'missing' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_9_error_in_loop_reported_once.py")
+  );
+  
+  "test_flags_errors_in_all_parts_of_loop" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 2;
+          exn = "NameError: name 'missing' is not defined"
+        };
+        {
+          line = 5;
+          exn = "NameError: name 'missing' is not defined"
+        };
+        {
+          line = 8;
+          exn = "NameError: name 'missing' is not defined"
+        };
+        {
+          line = 9;
+          exn = "NameError: name 'missing' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_10_errors_in_loop.py")
   );
 ]
 
