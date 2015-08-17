@@ -278,6 +278,12 @@ let test_fixture = "Plint" >:::
       []
       (Plint.check "src/test_data/ok_08_func_def.py")
   );
+  
+  "test_passes_read_of_defined_func" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_09_read_defined_func.py")
+  );
 ]
 
 

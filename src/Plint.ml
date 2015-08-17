@@ -25,8 +25,8 @@ let rec
         
         let step0 = context in
         let step1 = eval step0 func in
-        let step2 = BatList.fold_left eval step1 args in
-        let step3 = BatList.fold_left eval step2 (keyword_values keywords) in
+        let step2 = eval_list step1 args in
+        let step3 = eval_list step2 (keyword_values keywords) in
         let step4 = eval_option step3 starargs in
         let step5 = eval_option step4 kwargs in
         step5
@@ -113,8 +113,14 @@ let rec
     let open PyAst in
     match stmt with
       | FunctionDef { name = name; args = args; body = body;
-                      decorator_list = decorator_list; returns = returns } ->
-        context
+                      decorator_list = decorator_list; returns = returns;
+                      location = location } ->
+        let (name_expr : expr) = Name {
+          id = name;
+          ctx = Store;
+          location = location
+        } in
+        eval_assign context name_expr
       
       | Delete { targets = targets } ->
         let step0 = context in
