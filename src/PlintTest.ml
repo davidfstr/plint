@@ -213,7 +213,7 @@ let test_fixture = "Plint" >:::
         }
       ]
       (Plint.check "src/test_data/bad_7_errors_in_if.py")
-  );  
+  );
   
   (* Loops *)
   
@@ -245,6 +245,26 @@ let test_fixture = "Plint" >:::
         }
       ]
       (Plint.check "src/test_data/bad_9_error_in_loop_reported_once.py")
+  );
+  
+  "test_flags_errors_in_all_parts_of_loop" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 2;
+          exn = "NameError: name 'missing' is not defined"
+        };
+        {
+          line = 5;
+          exn = "NameError: name 'missing' is not defined"
+        };
+        {
+          line = 7;
+          exn = "NameError: name 'missing' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_10_errors_in_loop.py")
   );
 ]
 
