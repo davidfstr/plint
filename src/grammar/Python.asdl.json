@@ -8,6 +8,7 @@
         ["Assign", "expr_list", "targets", "expr", "value"],
         ["AugAssign", "expr", "target", "operator", "op", "expr", "value"],
         
+        ["While", "expr", "test", "stmt_list", "body", "stmt_list", "orelse"],
         ["If", "expr", "test", "stmt_list", "body", "stmt_list", "orelse"],
         
         ["Expr", "expr", "value"]

@@ -213,6 +213,14 @@ let test_fixture = "Plint" >:::
         }
       ]
       (Plint.check "src/test_data/bad_7_errors_in_conditional.py")
+  );  
+  
+  (* Loops *)
+  
+  "test_passes_while_loop" >:: ( fun () ->
+    assert_equal ~printer:Plint.string_of_error_list
+      []
+      (Plint.check "src/test_data/ok_7_loop.py")
   );
 ]
 

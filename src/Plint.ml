@@ -105,6 +105,9 @@ let rec
   (eval_assign_list : exec_context -> PyAst.expr list -> exec_context) context targets =
     BatList.fold_left eval_assign context targets
 
+let (string_of_exec_context : exec_context -> string) context =
+  Sexp.to_string (sexp_of_list sexp_of_string (BatSet.to_list context.names))
+
 let rec
   (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
     let open PyAst in
@@ -128,6 +131,60 @@ let rec
         let step2 = eval step1 value in
         let step3 = eval_assign step2 target in
         step3
+      
+      | While { test = test; body = body; orelse = orelse } ->
+        let condition_join_point = ref context in
+        let nullable_exit_join_point = ref None in
+        let join_points_were_changed = ref true in
+        
+        let (merge : exec_context ref -> exec_context -> unit) join_point future_context =
+          let merged = {
+            names = BatSet.intersect (!join_point).names future_context.names;
+            errors = future_context.errors
+          } in
+          (if not (BatSet.equal (!join_point).names merged.names) then
+            join_points_were_changed := true
+          else
+            ()
+          ) ;
+          join_point := merged in
+        
+        let (merge_nullable : ((exec_context ref) option) ref -> exec_context -> unit) nullable_join_point future_context =
+          (match !nullable_join_point with
+            | None ->
+              nullable_join_point := Some { contents = future_context } ;
+              join_points_were_changed := true
+            
+            | Some join_point ->
+              merge join_point future_context
+          ) in
+        
+        let k_max_distinct_loop_iterations = 2 in
+        let i = ref 0 in
+        while (!join_points_were_changed) do
+          (if (!i > k_max_distinct_loop_iterations) then
+            (* Force exit of loop *)
+            join_points_were_changed := false
+          else
+            join_points_were_changed := false ;
+            
+            let step0 = !condition_join_point in
+            let step1 = eval step0 test in
+            merge_nullable nullable_exit_join_point step1 ;
+            let step2 = exec_list step1 body in
+            merge condition_join_point step2 ;
+            
+            i := !i + 1
+          )
+        done ;
+        
+        (match !nullable_exit_join_point with
+          | Some exit_join_point ->
+            !exit_join_point
+          
+          | None ->
+            assert false
+        )
       
       | If { test = test; body = body; orelse = orelse } ->
         let step0 = context in
