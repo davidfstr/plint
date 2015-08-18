@@ -1,13 +1,72 @@
 open Core.Std
 
-(* === Check Source File === *)
+(* === Execution Context === *)
 
 type error = {
   line : int;
   exn : string
 } with sexp
 
-type exec_context = { names : string BatSet.t; errors : error list }
+type typ =
+  | FuncRef of PyAst.stmt_FunctionDef
+  | Unknown
+  with sexp
+
+type exec_context = {
+  names : (string, typ) BatMap.t;
+  errors : error list
+}
+
+let (is_defined : exec_context -> string -> bool) context name =
+  BatMap.mem name context.names
+
+let (define : exec_context -> string -> typ -> exec_context) context name typ =
+  { context with names = BatMap.add name typ context.names }
+
+let (undefine : exec_context -> string -> exec_context) context name =
+  { context with names = BatMap.remove name context.names }
+
+let (intersect_names :
+    (string, typ) BatMap.t -> 
+    (string, typ) BatMap.t ->
+    (string, typ) BatMap.t)
+    names1 names2 =
+  
+  let (join : typ -> typ -> typ) typ1 typ2 = 
+    match (typ1, typ2) with
+      | (Unknown, _)
+      | (_, Unknown) ->
+        Unknown
+      
+      | (FuncRef f, FuncRef g) ->
+        if f = g then
+          FuncRef f
+        else
+          (* TODO: Emit warning about unable to perserve type information *)
+          Unknown
+    in
+  BatMap.intersect join names1 names2
+
+let (equal_names :
+    (string, typ) BatMap.t -> 
+    (string, typ) BatMap.t ->
+    bool)
+    names1 names2 =
+  
+  BatMap.equal (=) names1 names2
+
+let (sexp_of_string_typ : (string * typ) -> Sexp.t) binding =
+  let open Core.Std.Sexp in
+  let (k, v) = binding in
+  List [Atom k; sexp_of_typ v]
+
+let (sexp_of_exec_context : exec_context -> Sexp.t) context =
+  sexp_of_list sexp_of_string_typ (BatMap.bindings context.names)
+
+let (string_of_exec_context : exec_context -> string) context =
+  Sexp.to_string (sexp_of_exec_context context)
+
+(* === Check Source File === *)
 
 let rec 
   (eval : exec_context -> PyAst.expr -> exec_context) context expr = 
@@ -29,6 +88,7 @@ let rec
         let step3 = eval_list step2 (keyword_values keywords) in
         let step4 = eval_option step3 starargs in
         let step5 = eval_option step4 kwargs in
+        (* FIXME: Perform call *)
         step5
       
       | Num { n = _ }
@@ -40,7 +100,7 @@ let rec
         (match ctx with
           | Load
           | AugLoad ->
-            if BatSet.mem id context.names then
+            if is_defined context id then
               context
             else
               let new_error = {
@@ -88,10 +148,10 @@ let rec
           | Store
           | AugStore
           | Param -> 
-            { context with names = BatSet.add id context.names }
+            define context id Unknown
           
           | Del ->
-            { context with names = BatSet.remove id context.names }
+            undefine context id
         )
       
       (* Ignore all expr types that aren't valid in an assign context *)
@@ -104,9 +164,6 @@ let rec
   
   (eval_assign_list : exec_context -> PyAst.expr list -> exec_context) context targets =
     BatList.fold_left eval_assign context targets
-
-let (string_of_exec_context : exec_context -> string) context =
-  Sexp.to_string (sexp_of_list sexp_of_string (BatSet.to_list context.names))
 
 let rec
   (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
@@ -149,10 +206,10 @@ let rec
         
         let (merge : exec_context ref -> exec_context -> unit) join_point future_context =
           let merged = {
-            names = BatSet.intersect (!join_point).names future_context.names;
+            names = intersect_names (!join_point).names future_context.names;
             errors = future_context.errors
           } in
-          (if not (BatSet.equal (!join_point).names merged.names) then
+          (if not (equal_names (!join_point).names merged.names) then
             join_points_were_changed := true
           else
             ()
@@ -225,7 +282,7 @@ let rec
         let step2a = exec_list step1_noerr body in
         let step2b = exec_list step1_noerr orelse in
         let step3 = {
-          names = BatSet.intersect step2a.names step2b.names;
+          names = intersect_names step2a.names step2b.names;
           (* Concat in reverse order since error list is reversed *)
           errors = step2b.errors @ step2a.errors @ step1.errors
         } in
@@ -252,8 +309,11 @@ let (check : string -> error list) py_filepath =
     | Some ast ->
       let (stmts : PyAst.stmt list) = ast in
       
-      let builtins = ["print"] in
-      let initial_context = { names = BatSet.of_list builtins; errors = [] } in
+      let builtins = [("print", Unknown)] in
+      let initial_context = {
+        names = BatMap.of_enum (BatList.enum builtins);
+        errors = []
+      } in
       let final_context = exec_list initial_context stmts in
       
       let { errors = errors0 } = final_context in
