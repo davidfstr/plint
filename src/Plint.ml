@@ -20,6 +20,12 @@ type exec_context = {
 let (is_defined : exec_context -> string -> bool) context name =
   BatMap.mem name context.names
 
+let (get : exec_context -> string -> typ option) context name =
+  if BatMap.mem name context.names then
+    Some (BatMap.find name context.names)
+  else
+    None
+
 let (define : exec_context -> string -> typ -> exec_context) context name typ =
   { context with names = BatMap.add name typ context.names }
 
@@ -88,8 +94,33 @@ let rec
         let step3 = eval_list step2 (keyword_values keywords) in
         let step4 = eval_option step3 starargs in
         let step5 = eval_option step4 kwargs in
-        (* FIXME: Perform call *)
-        step5
+        
+        (* Determine identity of function to call if possible *)
+        let (func_ref : PyAst.stmt_FunctionDef option) =
+          match func with
+            | Name { id = id } ->
+              (match get context id with
+                | Some (FuncRef f) ->
+                  Some f
+                  
+                | Some _
+                | None ->
+                  None
+              )
+            
+            (* TODO: Support arbitrary expressions on the left side of a Call *)
+            | _ ->
+              None
+          in
+        
+        (* Perform call if possible, tracing into function *)
+        (match func_ref with
+          | Some { body = body } ->
+            exec_list step5 body
+          
+          | None ->
+            step5
+        )
       
       | Num { n = _ }
       | Str { s = _ }
@@ -125,12 +156,13 @@ let rec
         eval context expr
       
       | None ->
-        context and
+        context
+    and
   
   (eval_list : exec_context -> PyAst.expr list -> exec_context) context expr_list =
     BatList.fold_left eval context expr_list
+    and
 
-let rec
   (eval_assign : 
       exec_context -> PyAst.expr -> typ -> exec_context)
       context lvalue rvalue =
@@ -169,8 +201,8 @@ let rec
       context targets rvalue =
     let f = (fun context target -> eval_assign context target rvalue) in
     BatList.fold_left f context targets
-
-let rec
+    and
+  
   (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
     let open PyAst in
     match stmt with
