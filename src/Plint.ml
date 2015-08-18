@@ -131,9 +131,11 @@ let rec
     BatList.fold_left eval context expr_list
 
 let rec
-  (eval_assign : exec_context -> PyAst.expr -> exec_context) context expr =
+  (eval_assign : 
+      exec_context -> PyAst.expr -> typ -> exec_context)
+      context lvalue rvalue =
     let open PyAst in
-    match expr with
+    match lvalue with
       (* TODO: Recognize remaining exprs valid in assignment context. 6 total. *)
       | Name { id = id; ctx = ctx; location = location } ->
         (match ctx with
@@ -148,7 +150,7 @@ let rec
           | Store
           | AugStore
           | Param -> 
-            define context id Unknown
+            define context id rvalue
           
           | Del ->
             undefine context id
@@ -162,41 +164,49 @@ let rec
         context
     and
   
-  (eval_assign_list : exec_context -> PyAst.expr list -> exec_context) context targets =
-    BatList.fold_left eval_assign context targets
+  (eval_assign_list :
+      exec_context -> PyAst.expr list -> typ -> exec_context)
+      context targets rvalue =
+    let f = (fun context target -> eval_assign context target rvalue) in
+    BatList.fold_left f context targets
 
 let rec
   (exec : exec_context -> PyAst.stmt -> exec_context) context stmt = 
     let open PyAst in
     match stmt with
-      | FunctionDef { name = name; args = args; body = body;
-                      decorator_list = decorator_list; returns = returns;
-                      location = location } ->
-        let (name_expr : expr) = Name {
-          id = name;
-          ctx = Store;
-          location = location
-        } in
-        eval_assign context name_expr
+      | FunctionDef f ->
+        (match f with
+          | { name = name; args = args; body = body;
+              decorator_list = decorator_list; returns = returns;
+              location = location } ->
+            let (name_expr : expr) = Name {
+              id = name;
+              ctx = Store;
+              location = location
+            } in
+            eval_assign context name_expr (FuncRef f)
+        )
       
       | Delete { targets = targets } ->
         let step0 = context in
         let step1 = eval_list step0 targets in
-        let step2 = eval_assign_list step1 targets in
+        let step2 = eval_assign_list step1 targets Unknown in
         step2
       
       | Assign { targets = targets; value = value } ->
         let step0 = context in
         let step1 = eval_list step0 targets in
         let step2 = eval step1 value in
-        let step3 = eval_assign_list step2 targets in
+        (* TODO: Propagate type of value through assignment *)
+        let step3 = eval_assign_list step2 targets Unknown in
         step3
       
       | AugAssign { target = target; op = op; value = value } ->
         let step0 = context in
         let step1 = eval step0 target in
         let step2 = eval step1 value in
-        let step3 = eval_assign step2 target in
+        (* TODO: Propagate type of value through assignment *)
+        let step3 = eval_assign step2 target Unknown in
         step3
       
       | While { test = test; body = body; orelse = orelse; location = location } ->
