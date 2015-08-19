@@ -2,16 +2,22 @@ open Core.Std
 
 (* === Execution Context === *)
 
+(** An error message emitted by the linter. *)
 type error = {
   line : int;
   exn : string
 } with sexp
 
+(** A deduced type of (i.e. a proof about) a value. *)
 type typ =
   | FuncRef of PyAst.stmt_FunctionDef
   | Unknown
   with sexp
 
+(**
+ * The current type environment, describing the current names in scope and the
+ * types of values currently assigned to them.
+ *)
 type exec_context = {
   names : (string, typ) BatMap.t;
   errors : error list
