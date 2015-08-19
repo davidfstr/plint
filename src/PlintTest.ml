@@ -291,7 +291,7 @@ let test_fixture = "Plint" >:::
       (Plint.check "src/test_data/ok_10_error_in_uncalled_func.py")
   );
   
-  "test_flags_error_inside_called_func" >:: ( fun () ->
+  "test_flags_error_inside_func_called_by_name" >:: ( fun () ->
     let open Plint in
     assert_equal ~printer:Plint.string_of_error_list
       [
@@ -300,7 +300,19 @@ let test_fixture = "Plint" >:::
           exn = "NameError: name 'missing' is not defined"
         }
       ]
-      (Plint.check "src/test_data/bad_11_error_in_called_func.py")
+      (Plint.check "src/test_data/bad_11_error_in_func_called_by_name.py")
+  );
+  
+  "test_flags_error_inside_func_called_by_var" >:: ( fun () ->
+    let open Plint in
+    assert_equal ~printer:Plint.string_of_error_list
+      [
+        {
+          line = 2;
+          exn = "NameError: name 'missing' is not defined"
+        }
+      ]
+      (Plint.check "src/test_data/bad_12_error_in_func_called_by_var.py")
   );
 ]
 

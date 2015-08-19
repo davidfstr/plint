@@ -2,19 +2,42 @@ open Core.Std
 
 (* === Execution Context === *)
 
+(** An error message emitted by the linter. *)
 type error = {
   line : int;
   exn : string
 } with sexp
 
+(** A deduced type of (i.e. a proof about) a value. *)
 type typ =
+  (** Reference to a function with a specific known identity. *)
   | FuncRef of PyAst.stmt_FunctionDef
+  (**
+   * A value of Unknown type has multiple interpretations.
+   * 
+   * Writers should use k_*_typ constants to indicate a particular interpretation.
+   * Readers may refer to Unknown directly.
+   *)
   | Unknown
   with sexp
 
+(* Interpretations of the Unknown type: *)
+(** An error or similar prevents knowing what the type is. *)
+let k_unknown_typ = Unknown
+(** The type is not explicitly representable in this type system. *)
+let k_unrepresentable_typ = Unknown
+(** There is no result value. *)
+let k_noresult_typ = Unknown
+
+(**
+ * The current type environment, describing the current names in scope and the
+ * types of values currently assigned to them.
+ *)
 type exec_context = {
   names : (string, typ) BatMap.t;
-  errors : error list
+  errors : error list;
+  (* HACK: Cleaner to return as direct result of eval. But harder to compose. *)
+  last_eval_result : typ
 }
 
 let (is_defined : exec_context -> string -> bool) context name =
@@ -48,8 +71,8 @@ let (intersect_names :
         if f = g then
           FuncRef f
         else
-          (* TODO: Emit warning about unable to perserve type information *)
-          Unknown
+          (* TODO: Warn that type information could not be preserved *)
+          k_unrepresentable_typ  (* f|g *)
     in
   BatMap.intersect join names1 names2
 
@@ -114,39 +137,52 @@ let rec
           in
         
         (* Perform call if possible, tracing into function *)
-        (match func_ref with
-          | Some { body = body } ->
-            exec_list step5 body
-          
-          | None ->
-            step5
-        )
+        let step6 =
+          match func_ref with
+            | Some { body = body } ->
+              let return_context = exec_list step5 body in
+              (* TODO: Support functions that return values *)
+              { return_context with last_eval_result = k_unrepresentable_typ }  (* NoneType *)
+            
+            | None ->
+              (* TODO: Warn that could not trace into unknown function,
+               *       or determine what its return type was. *)
+              { step5 with last_eval_result = k_unknown_typ }
+          in
+        step6
       
       | Num { n = _ }
       | Str { s = _ }
       | NameConstant { value = _ } ->
-        context
+        { context with last_eval_result = k_unrepresentable_typ }  (* bool (so far) *)
       
       | Name { id = id; ctx = ctx; location = location } ->
         (match ctx with
           | Load
           | AugLoad ->
-            if is_defined context id then
-              context
-            else
-              let new_error = {
-                line = location.lineno;
-                exn = "NameError: name '" ^ id ^ "' is not defined"
-              } in
-              { context with errors = new_error :: context.errors }
+            (match get context id with
+              | Some value ->
+                { context with last_eval_result = value }
+                
+              | None ->
+                let new_error = {
+                  line = location.lineno;
+                  exn = "NameError: name '" ^ id ^ "' is not defined"
+                } in
+                {
+                  context with
+                  errors = new_error :: context.errors;
+                  last_eval_result = k_unknown_typ
+                }
+            )
           
           | Store
           | AugStore
           | Param -> 
-            context
+            { context with last_eval_result = k_noresult_typ }
           
           | Del ->
-            context
+            { context with last_eval_result = k_noresult_typ }
         )
     and
   
@@ -222,23 +258,23 @@ let rec
       | Delete { targets = targets } ->
         let step0 = context in
         let step1 = eval_list step0 targets in
-        let step2 = eval_assign_list step1 targets Unknown in
+        let step2 = eval_assign_list step1 targets k_noresult_typ in
         step2
       
       | Assign { targets = targets; value = value } ->
         let step0 = context in
         let step1 = eval_list step0 targets in
         let step2 = eval step1 value in
-        (* TODO: Propagate type of value through assignment *)
-        let step3 = eval_assign_list step2 targets Unknown in
+        let rvalue = step2.last_eval_result in
+        let step3 = eval_assign_list step2 targets rvalue in
         step3
       
       | AugAssign { target = target; op = op; value = value } ->
         let step0 = context in
         let step1 = eval step0 target in
         let step2 = eval step1 value in
-        (* TODO: Propagate type of value through assignment *)
-        let step3 = eval_assign step2 target Unknown in
+        let rvalue = step2.last_eval_result in
+        let step3 = eval_assign step2 target rvalue in
         step3
       
       | While { test = test; body = body; orelse = orelse; location = location } ->
@@ -249,7 +285,8 @@ let rec
         let (merge : exec_context ref -> exec_context -> unit) join_point future_context =
           let merged = {
             names = intersect_names (!join_point).names future_context.names;
-            errors = future_context.errors
+            errors = future_context.errors;
+            last_eval_result = k_noresult_typ
           } in
           (if not (equal_names (!join_point).names merged.names) then
             join_points_were_changed := true
@@ -326,7 +363,8 @@ let rec
         let step3 = {
           names = intersect_names step2a.names step2b.names;
           (* Concat in reverse order since error list is reversed *)
-          errors = step2b.errors @ step2a.errors @ step1.errors
+          errors = step2b.errors @ step2a.errors @ step1.errors;
+          last_eval_result = k_noresult_typ
         } in
         step3
       
@@ -351,10 +389,11 @@ let (check : string -> error list) py_filepath =
     | Some ast ->
       let (stmts : PyAst.stmt list) = ast in
       
-      let builtins = [("print", Unknown)] in
+      let builtins = [("print", k_unrepresentable_typ)] in  (* NoneType *)
       let initial_context = {
         names = BatMap.of_enum (BatList.enum builtins);
-        errors = []
+        errors = [];
+        last_eval_result = k_noresult_typ
       } in
       let final_context = exec_list initial_context stmts in
       
