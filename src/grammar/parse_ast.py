@@ -36,7 +36,7 @@ def format_ast_as_json(an_ast):
         for field_name in an_ast._fields
     ])
     
-    if isinstance(an_ast, ast.stmt) or isinstance(an_ast, ast.expr):
+    if hasattr(an_ast, 'lineno') and hasattr(an_ast, 'col_offset'):
         attributes = OrderedDict([
             ('lineno', an_ast.lineno),
             ('col_offset', an_ast.lineno),
