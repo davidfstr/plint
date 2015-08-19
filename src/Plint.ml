@@ -113,6 +113,7 @@ let rec
         
         let step0 = context in
         let step1 = eval step0 func in
+        let func_value = step1.last_eval_result in
         let step2 = eval_list step1 args in
         let step3 = eval_list step2 (keyword_values keywords) in
         let step4 = eval_option step3 starargs in
@@ -120,19 +121,11 @@ let rec
         
         (* Determine identity of function to call if possible *)
         let (func_ref : PyAst.stmt_FunctionDef option) =
-          match func with
-            | Name { id = id } ->
-              (match get context id with
-                | Some (FuncRef f) ->
-                  Some f
-                  
-                | Some _
-                | None ->
-                  None
-              )
+          match func_value with
+            | FuncRef f ->
+              Some f
             
-            (* TODO: Support arbitrary expressions on the left side of a Call *)
-            | _ ->
+            | Unknown ->
               None
           in
         
