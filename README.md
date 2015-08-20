@@ -4,24 +4,34 @@ A Python type checker and linter that just works.
 
 Plint's main objective is to find any misspelled function, module, method, or class names in your Python program *without* requiring you to make any up-front changes to it, such as adding type annotations.
 
+## Status
+
+Presently Plint is **pre-alpha** and undergoing heavy development. See the [wiki] for more information.
+
+[wiki]: https://github.com/davidfstr/plint/wiki
+
 
 ## Requirements
 
-* Make
 * Python 3.4.x
-* OCaml 4.02.1
+    * Download from [python.org](https://www.python.org/downloads/).
+* OPAM
     * On OS X, run `brew install opam` to get OPAM.
-    * With OPAM, run `opam switch 4.02.1` and `eval \`opam config env\``
-* ocamlfind 1.5.5
-    * With OPAM, run `opam install ocamlfind`
-* OUnit 2.0.0
-    * With OPAM, run `opam install ounit`
-* Batteries 2.3.1
-    * With OPAM, run `opam install batteries`
-* yojson 1.2.1
-    * With OPAM, run `opam install yojson`
-* core 112.35.01
-    * With OPAM, run `opam install core`
+* Make
+    * On OS X, installed by default.
+
+With OPAM, install the remaining dependencies:
+
+```
+opam switch 4.02.1     # OCaml 4.02.1
+eval `opam config env`
+
+opam install ocamlfind # ocamlfind 1.5.5
+opam install ounit     # OUnit 2.0.0
+opam install batteries # Batteries 2.3.1
+opam install yojson    # yojson 1.2.1
+opam install core      # core 112.35.01
+```
 
 ## Running the unit tests
 
