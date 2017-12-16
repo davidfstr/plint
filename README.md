@@ -6,8 +6,11 @@ Plint's main objective is to find any misspelled function, module, method, or cl
 
 ## Status
 
-Presently Plint is **pre-alpha** and undergoing heavy development. See the [wiki] for more information.
+Development on Plint has been **suspended**. Consider using the [mypy] type checker instead.
 
+For those interested in the design of the type system used by Plint, please see the [wiki].
+
+[mypy]: http://mypy-lang.org/
 [wiki]: https://github.com/davidfstr/plint/wiki
 
 
